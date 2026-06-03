@@ -3,6 +3,7 @@ import HeroSection from '../components/portfolio/HeroSection';
 import AboutSection from '../components/portfolio/AboutSection';
 import JourneySection from '../components/portfolio/JourneySection';
 import AchievementsSection from '../components/portfolio/AchievementsSection';
+import ScholarshipsSection from '../components/portfolio/ScholarshipsSection';
 import ContactSection from '../components/portfolio/ContactSection';
 import Footer from '../components/portfolio/Footer';
 
@@ -14,6 +15,7 @@ export default function PortfolioPage() {
       <AboutSection />
       <JourneySection />
       <AchievementsSection />
+      <ScholarshipsSection />
       <ContactSection />
       <Footer />
     </div>

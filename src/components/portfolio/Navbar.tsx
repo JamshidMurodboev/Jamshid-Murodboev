@@ -28,6 +28,7 @@ export default function Navbar() {
     { href: '#about', label: t.nav.about },
     { href: '#journey', label: t.nav.journey },
     { href: '#achievements', label: t.nav.achievements },
+    { href: '#scholarships', label: t.nav.scholarships },
     { href: '#contact', label: t.nav.contact },
   ];
 

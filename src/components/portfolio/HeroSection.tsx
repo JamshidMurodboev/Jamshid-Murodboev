@@ -20,9 +20,19 @@ export default function HeroSection() {
       <div className="absolute bottom-1/4 right-8 text-3xl opacity-20 animate-bounce" style={{ animationDelay: '0.5s' }}>🇭🇺</div>
 
       <div className="relative z-10 text-center px-4 sm:px-6 max-w-4xl mx-auto">
-        {/* Avatar placeholder */}
-        <div className="mx-auto mb-8 w-28 h-28 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-5xl shadow-2xl ring-4 ring-white dark:ring-slate-800">
-          👨‍🎓
+        {/* Profile photo */}
+        <div className="mx-auto mb-8 w-36 h-36 rounded-full overflow-hidden shadow-2xl ring-4 ring-white dark:ring-slate-800">
+          <img
+            src="/photo.jpg"
+            alt="Jamshid Murodboev"
+            className="w-full h-full object-cover object-top"
+            onError={(e) => {
+              const target = e.currentTarget;
+              target.style.display = 'none';
+              target.parentElement!.classList.add('bg-gradient-to-br', 'from-indigo-500', 'to-purple-600', 'flex', 'items-center', 'justify-center', 'text-5xl');
+              target.parentElement!.textContent = '👨‍🎓';
+            }}
+          />
         </div>
 
         <p className="text-indigo-600 dark:text-indigo-400 font-medium text-lg mb-2 tracking-wide">

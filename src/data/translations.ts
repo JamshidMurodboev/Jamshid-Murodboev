@@ -7,6 +7,7 @@ export const translations = {
       about: 'Men haqimda',
       journey: 'Sayohat',
       achievements: 'Yutuqlar',
+      scholarships: 'Grantlar',
       contact: 'Aloqa',
     },
     hero: {
@@ -106,6 +107,7 @@ export const translations = {
       about: 'About',
       journey: 'Journey',
       achievements: 'Achievements',
+      scholarships: 'Scholarships',
       contact: 'Contact',
     },
     hero: {
@@ -205,6 +207,7 @@ export const translations = {
       about: 'Обо мне',
       journey: 'Путешествие',
       achievements: 'Достижения',
+      scholarships: 'Гранты',
       contact: 'Контакт',
     },
     hero: {
@@ -304,6 +307,7 @@ export const translations = {
       about: 'Hakkımda',
       journey: 'Yolculuk',
       achievements: 'Başarılar',
+      scholarships: 'Burslar',
       contact: 'İletişim',
     },
     hero: {
