@@ -8,6 +8,7 @@ import { COUNTRIES } from '../lib/countries';
 import ImageUpload from '../components/ImageUpload';
 import { useTheme } from '../contexts/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
+import { LogoWithFallback } from '../components/Logo';
 import toast from 'react-hot-toast';
 
 const OnboardingPage: React.FC = () => {
@@ -81,10 +82,7 @@ const OnboardingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-amber-50 dark:bg-midnight transition-colors duration-300">
       <div className="flex justify-between items-center p-4">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">✈️</span>
-          <span className="font-bold text-slate-800 dark:text-white text-lg">Memory Capsule</span>
-        </div>
+        <LogoWithFallback height={36} />
         <button onClick={toggleTheme} className="p-2 rounded-xl bg-amber-100 dark:bg-slate-700 text-amber-700 dark:text-amber-300">
           {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
         </button>

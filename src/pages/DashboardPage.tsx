@@ -66,10 +66,12 @@ const DashboardPage: React.FC = () => {
     try {
       let photoURL = '';
       if (groupPhotoFile) {
-        const id = Date.now().toString();
+        const id = `${user.uid}_${Date.now()}`;
         const storageRef = ref(storage, `groups/${id}`);
-        await uploadBytes(storageRef, groupPhotoFile);
-        photoURL = await getDownloadURL(storageRef);
+        const snapshot = await uploadBytes(storageRef, groupPhotoFile, {
+          contentType: groupPhotoFile.type || 'image/jpeg',
+        });
+        photoURL = await getDownloadURL(snapshot.ref);
       }
 
       const code = generateCode();
@@ -182,7 +184,7 @@ const DashboardPage: React.FC = () => {
             </div>
           ) : groups.length === 0 ? (
             <div className="text-center py-16 text-slate-400 dark:text-slate-500">
-              <p className="text-5xl mb-4">✈️</p>
+              <img src="/logo.png" alt="" className="h-16 w-auto mx-auto mb-4 opacity-30 dark:opacity-20" onError={e => { e.currentTarget.style.display='none'; (e.currentTarget.nextElementSibling as HTMLElement|null)?.style?.setProperty('display','block'); }} /><p className="text-5xl mb-4 hidden">✈️</p>
               <p className="text-lg font-medium">No groups yet</p>
               <p className="text-sm">Create or join a group to start capturing memories</p>
             </div>

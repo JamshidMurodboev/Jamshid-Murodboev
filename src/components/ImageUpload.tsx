@@ -34,19 +34,32 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     try {
       const compressed = await imageCompression(file, {
         maxSizeMB: 0.5,
-        maxWidthOrHeight: 800,
+        maxWidthOrHeight: 1024,
         useWebWorker: true,
+        fileType: file.type as 'image/jpeg' | 'image/png' | 'image/webp',
       });
-      const url = URL.createObjectURL(compressed);
-      onImageSelected(compressed as File, url);
-    } catch {
-      toast.error('Failed to process image');
+
+      // Ensure the result is a proper File with the correct MIME type
+      const resultFile = new File([compressed], file.name, {
+        type: compressed.type || file.type || 'image/jpeg',
+        lastModified: Date.now(),
+      });
+
+      const url = URL.createObjectURL(resultFile);
+      onImageSelected(resultFile, url);
+    } catch (err) {
+      console.error('Compression error:', err);
+      // Fall back to original file if compression fails
+      const url = URL.createObjectURL(file);
+      onImageSelected(file, url);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) handleFile(file);
+    // Reset input so same file can be re-selected
+    e.target.value = '';
   };
 
   const shapeClass = shape === 'circle' ? 'rounded-full' : 'rounded-2xl';
@@ -54,11 +67,17 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   return (
     <div className="flex flex-col items-center gap-2">
       <div
-        className={`relative ${sizeMap[size]} ${shapeClass} overflow-hidden cursor-pointer group bg-amber-100 dark:bg-slate-700 border-2 border-dashed border-amber-300 dark:border-slate-500`}
+        className={`relative ${sizeMap[size]} ${shapeClass} overflow-hidden cursor-pointer group bg-amber-100 dark:bg-slate-700 border-2 border-dashed border-amber-300 dark:border-slate-500 transition-all`}
         onClick={() => inputRef.current?.click()}
       >
         {currentImage ? (
-          <img src={currentImage} alt="Upload" className="w-full h-full object-cover" />
+          <img
+            src={currentImage}
+            alt="Upload"
+            className="w-full h-full object-cover"
+            crossOrigin="anonymous"
+            referrerPolicy="no-referrer"
+          />
         ) : (
           <div className="flex flex-col items-center justify-center w-full h-full text-amber-400 dark:text-slate-400">
             <Camera size={24} />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users } from 'lucide-react';
 
@@ -13,17 +13,27 @@ interface GroupCardProps {
 
 const GroupCard: React.FC<GroupCardProps> = ({ id, name, description, photoURL, memberCount }) => {
   const navigate = useNavigate();
+  const [imgError, setImgError] = useState(false);
+
+  const showPhoto = photoURL && !imgError;
 
   return (
     <div
       className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-md border border-amber-100 dark:border-slate-700 overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1"
       onClick={() => navigate(`/group/${id}`)}
     >
-      <div className="h-40 bg-gradient-to-br from-amber-200 to-orange-300 dark:from-slate-600 dark:to-slate-700 overflow-hidden">
-        {photoURL ? (
-          <img src={photoURL} alt={name} className="w-full h-full object-cover" />
+      <div className="h-40 bg-gradient-to-br from-amber-200 to-orange-300 dark:from-slate-600 dark:to-slate-700 overflow-hidden flex items-center justify-center">
+        {showPhoto ? (
+          <img
+            src={photoURL}
+            alt={name}
+            className="w-full h-full object-cover"
+            crossOrigin="anonymous"
+            onError={() => setImgError(true)}
+            referrerPolicy="no-referrer"
+          />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-5xl">✈️</div>
+          <span className="text-5xl">✈️</span>
         )}
       </div>
       <div className="p-4">

@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users — any authenticated user can read profiles (for member cards)
+    // Only the owner can write their own profile
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Groups — readable by members, writable by creator
+    match /groups/{groupId} {
+      allow read: if request.auth != null &&
+        request.auth.uid in resource.data.members;
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.createdBy;
+      allow update: if request.auth != null &&
+        request.auth.uid == resource.data.createdBy;
+      allow delete: if request.auth != null &&
+        request.auth.uid == resource.data.createdBy;
+
+      // Wall posts inside group subcollection
+      match /posts/{postId} {
+        allow read: if request.auth != null &&
+          request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
+        allow create: if request.auth != null &&
+          request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members &&
+          request.auth.uid == request.resource.data.authorId;
+        allow update, delete: if request.auth != null &&
+          request.auth.uid == resource.data.authorId;
+      }
+    }
+
+    // PRIVATE NOTES — STRICTLY enforced: only writer OR recipient can access
+    match /notes/{noteId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.writerId ||
+        request.auth.uid == resource.data.recipientId
+      );
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.writerId;
+      // Writer can only update if note is still a draft
+      allow update: if request.auth != null &&
+        request.auth.uid == resource.data.writerId &&
+        resource.data.status == 'draft';
+      allow delete: if request.auth != null &&
+        request.auth.uid == resource.data.writerId &&
+        resource.data.status == 'draft';
+    }
+
+    // Notifications — recipient can read/update (mark read), system creates them
+    match /notifications/{notifId} {
+      allow read, update: if request.auth != null &&
+        request.auth.uid == resource.data.recipientId;
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.senderId;
+    }
+  }
+}

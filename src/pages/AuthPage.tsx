@@ -8,6 +8,7 @@ import {
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../lib/firebase';
 import { useTheme } from '../contexts/ThemeContext';
+import { LogoWithFallback } from '../components/Logo';
 import { Sun, Moon } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -83,10 +84,7 @@ const AuthPage: React.FC = () => {
     <div className="min-h-screen bg-amber-50 dark:bg-midnight flex flex-col transition-colors duration-300">
       {/* Top bar */}
       <div className="flex justify-between items-center p-4">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">✈️</span>
-          <span className="font-bold text-slate-800 dark:text-white text-lg">Memory Capsule</span>
-        </div>
+        <LogoWithFallback height={36} />
         <button onClick={toggleTheme} className="p-2 rounded-xl bg-amber-100 dark:bg-slate-700 text-amber-700 dark:text-amber-300">
           {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
         </button>
