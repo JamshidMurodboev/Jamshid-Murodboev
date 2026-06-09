@@ -1,36 +1,72 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { useAuth } from './contexts/AuthContext'
-import AuthPage from './pages/AuthPage'
-import OnboardingPage from './pages/OnboardingPage'
-import DashboardPage from './pages/DashboardPage'
-import GroupPage from './pages/GroupPage'
-import ProfilePage from './pages/ProfilePage'
-import NotesPage from './pages/NotesPage'
+import HomePage from './pages/HomePage'
+import ScholarshipsPage from './pages/ScholarshipsPage'
+import UniversitiesPage from './pages/UniversitiesPage'
+import ContactPage from './pages/ContactPage'
+import AdminLoginPage from './pages/AdminLoginPage'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminScholarships from './pages/admin/AdminScholarships'
+import AdminUniversities from './pages/admin/AdminUniversities'
 
-function ProtectedRoute({ children, requireComplete = true }: { children: React.ReactElement; requireComplete?: boolean }) {
-  const { user, userProfile, loading } = useAuth()
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-amber-50 dark:bg-slate-900"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" /></div>
-  if (!user) return <Navigate to="/" replace />
-  if (requireComplete && userProfile && !userProfile.profileComplete) return <Navigate to="/onboarding" replace />
+function ProtectedRoute({ children }: { children: React.ReactElement }) {
+  const { user, loading } = useAuth()
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-900">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500" />
+      </div>
+    )
+  }
+  if (!user) return <Navigate to="/admin/login" replace />
+  return children
+}
+
+function AdminLoginRoute({ children }: { children: React.ReactElement }) {
+  const { user, loading } = useAuth()
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-900">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500" />
+      </div>
+    )
+  }
+  if (user) return <Navigate to="/admin" replace />
   return children
 }
 
 function App() {
-  const { user, userProfile, loading } = useAuth()
-
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-amber-50 dark:bg-slate-900"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" /></div>
-
   return (
     <>
-      <Toaster position="top-right" toastOptions={{ className: 'dark:bg-slate-800 dark:text-white' }} />
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: { borderRadius: '8px', background: '#1e293b', color: '#fff' },
+          success: { iconTheme: { primary: '#f59e0b', secondary: '#fff' } },
+        }}
+      />
       <Routes>
-        <Route path="/" element={user && userProfile?.profileComplete ? <Navigate to="/dashboard" replace /> : user && !userProfile?.profileComplete ? <Navigate to="/onboarding" replace /> : <AuthPage />} />
-        <Route path="/onboarding" element={user ? <OnboardingPage /> : <Navigate to="/" replace />} />
-        <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-        <Route path="/group/:groupId" element={<ProtectedRoute><GroupPage /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-        <Route path="/notes" element={<ProtectedRoute><NotesPage /></ProtectedRoute>} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/scholarships" element={<ScholarshipsPage />} />
+        <Route path="/universities" element={<UniversitiesPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route
+          path="/admin/login"
+          element={<AdminLoginRoute><AdminLoginPage /></AdminLoginRoute>}
+        />
+        <Route
+          path="/admin"
+          element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>}
+        />
+        <Route
+          path="/admin/scholarships"
+          element={<ProtectedRoute><AdminScholarships /></ProtectedRoute>}
+        />
+        <Route
+          path="/admin/universities"
+          element={<ProtectedRoute><AdminUniversities /></ProtectedRoute>}
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
