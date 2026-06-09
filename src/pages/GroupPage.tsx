@@ -122,15 +122,9 @@ const GroupPage: React.FC = () => {
     if (!group || !editName.trim()) return;
     setSaving(true);
     try {
-      let photoURL = group.photoURL || '';
-
-      if (editPhotoFile) {
-        const storageRef = ref(storage, `groups/${group.id}_${Date.now()}`);
-        const snapshot = await uploadBytes(storageRef, editPhotoFile, {
-          contentType: editPhotoFile.type || 'image/jpeg',
-        });
-        photoURL = await getDownloadURL(snapshot.ref);
-      }
+      const photoURL = group.photoURL || '';
+      // Storage not enabled — photo upload disabled
+      // if (editPhotoFile) { ... upload ... }
 
       await updateDoc(doc(db, 'groups', group.id), {
         name: editName.trim(),

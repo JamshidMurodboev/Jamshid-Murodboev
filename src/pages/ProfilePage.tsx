@@ -68,12 +68,9 @@ const ProfilePage: React.FC = () => {
     if (!user) return;
     setSaving(true);
     try {
-      let photoURL = userProfile?.photoURL || '';
-      if (photoFile) {
-        const storageRef = ref(storage, `avatars/${user.uid}`);
-        await uploadBytes(storageRef, photoFile);
-        photoURL = await getDownloadURL(storageRef);
-      }
+      const photoURL = userProfile?.photoURL || '';
+      // Storage not enabled — photo upload disabled
+      // if (photoFile) { ... upload ... }
       await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
         email: user.email,

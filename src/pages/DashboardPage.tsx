@@ -64,15 +64,9 @@ const DashboardPage: React.FC = () => {
     if (!groupName.trim() || !user) return;
     setCreating(true);
     try {
-      let photoURL = '';
-      if (groupPhotoFile) {
-        const id = `${user.uid}_${Date.now()}`;
-        const storageRef = ref(storage, `groups/${id}`);
-        const snapshot = await uploadBytes(storageRef, groupPhotoFile, {
-          contentType: groupPhotoFile.type || 'image/jpeg',
-        });
-        photoURL = await getDownloadURL(snapshot.ref);
-      }
+      const photoURL = '';
+      // Storage not enabled — group photo upload disabled
+      // if (groupPhotoFile) { ... upload ... }
 
       const code = generateCode();
       await addDoc(collection(db, 'groups'), {

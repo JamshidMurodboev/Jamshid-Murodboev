@@ -44,12 +44,9 @@ const OnboardingPage: React.FC = () => {
 
     setLoading(true);
     try {
-      let photoURL = '';
-      if (photoFile) {
-        const storageRef = ref(storage, `avatars/${user.uid}`);
-        await uploadBytes(storageRef, photoFile);
-        photoURL = await getDownloadURL(storageRef);
-      }
+      const photoURL = '';
+      // Storage not enabled — photo upload disabled
+      // if (photoFile) { ... upload ... }
 
       await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
