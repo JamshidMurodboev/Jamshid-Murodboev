@@ -20,7 +20,7 @@
             body: ['Inter','sans-serif'],
           },
           colors: {
-            brand: { red:'#DC2626', dark:'#0B0F17' }
+            brand: { red:'#DC2626', dark:'#111111' }
           }
         }
       }
@@ -29,9 +29,9 @@
   <style>
     body { font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
     h1,h2,h3,.font-display { font-family:'Archivo',sans-serif; }
-    .hero-grad { background: radial-gradient(ellipse 80% 60% at 60% 0%, rgba(220,38,38,0.15) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 100% 100%, rgba(251,146,60,0.08) 0%, transparent 50%), #0B0F17; }
-    .about-grad { background: radial-gradient(ellipse 80% 60% at 30% 100%, rgba(220,38,38,0.12) 0%, transparent 60%), #0B0F17; }
-    .final-grad { background: radial-gradient(ellipse 70% 80% at 50% 50%, rgba(220,38,38,0.18) 0%, transparent 70%), #0B0F17; }
+    .hero-grad { background: radial-gradient(ellipse 80% 60% at 60% 0%, rgba(220,38,38,0.15) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 100% 100%, rgba(251,146,60,0.08) 0%, transparent 50%), #111111; }
+    .about-grad { background: radial-gradient(ellipse 80% 60% at 30% 100%, rgba(220,38,38,0.12) 0%, transparent 60%), #111111; }
+    .final-grad { background: radial-gradient(ellipse 70% 80% at 50% 50%, rgba(220,38,38,0.18) 0%, transparent 70%), #111111; }
     .glass { background:rgba(255,255,255,0.05); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.1); }
     .check-icon { width:20px;height:20px;border-radius:50%;background:rgba(16,185,129,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0; }
     /* scroll reveal */
@@ -140,7 +140,7 @@
 </section>
 
 <!-- ========== 02 PROOF STRIP ========== -->
-<section class="bg-[#0B0F17] border-t border-white/5 py-10 px-4">
+<section class="bg-[#111111] border-t border-white/5 py-10 px-4">
   <div class="max-w-5xl mx-auto">
     <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
       <div class="reveal">
@@ -163,59 +163,139 @@
   </div>
 </section>
 
+<!-- ========== IS THIS FOR ME? ========== -->
+<section class="py-20 px-4 bg-white" id="audience">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-12">
+      <span class="inline-block text-stone-400 text-xs font-bold tracking-widest uppercase mb-3">Kim uchun?</span>
+      <h2 class="font-display text-[clamp(1.75rem,4vw,2.75rem)] font-black tracking-tight text-stone-900 reveal">Bu mentorlik siz uchunmi?</h2>
+      <p class="text-stone-500 mt-3 max-w-lg mx-auto reveal">Türkiye Bursları va Stipendium Hungaricum Bakalavr, Magistratura va PhD darajalarini qamrab oladi.</p>
+    </div>
+    <div class="grid md:grid-cols-3 gap-6">
+      <article class="border border-stone-200 rounded-lg p-7 stagger-item hover:border-stone-400 transition-colors duration-200">
+        <p class="text-stone-400 text-[10px] font-bold tracking-widest uppercase mb-4">01</p>
+        <h3 class="font-display font-black text-2xl text-stone-900 mb-3">Bakalavr</h3>
+        <p class="text-stone-500 text-[15px] leading-relaxed mb-5">O'rta maktabni tugatgan yoki hozir o'qiyotgan abituriyentlar uchun. Ikkala grant ham Bakalavr dasturlarini to'liq qoplaydi.</p>
+        <ul class="space-y-2">
+          <li class="flex items-center gap-2 text-sm text-stone-600">
+            <svg class="w-4 h-4 text-stone-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Türkiye Bursları — Bakalavr
+          </li>
+          <li class="flex items-center gap-2 text-sm text-stone-600">
+            <svg class="w-4 h-4 text-stone-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Stipendium Hungaricum — Bakalavr
+          </li>
+        </ul>
+      </article>
+      <article class="border border-stone-200 rounded-lg p-7 stagger-item hover:border-stone-400 transition-colors duration-200">
+        <p class="text-stone-400 text-[10px] font-bold tracking-widest uppercase mb-4">02</p>
+        <h3 class="font-display font-black text-2xl text-stone-900 mb-3">Magistratura</h3>
+        <p class="text-stone-500 text-[15px] leading-relaxed mb-5">Bakalavr bitiruvchilari yoki hozir Magistratura o'qiyotganlar. Eng ko'p talabalar shu darajada topshiradi.</p>
+        <ul class="space-y-2">
+          <li class="flex items-center gap-2 text-sm text-stone-600">
+            <svg class="w-4 h-4 text-stone-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Türkiye Bursları — Magistratura
+          </li>
+          <li class="flex items-center gap-2 text-sm text-stone-600">
+            <svg class="w-4 h-4 text-stone-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Stipendium Hungaricum — Magistratura
+          </li>
+        </ul>
+      </article>
+      <article class="border border-stone-200 rounded-lg p-7 stagger-item hover:border-stone-400 transition-colors duration-200">
+        <p class="text-stone-400 text-[10px] font-bold tracking-widest uppercase mb-4">03</p>
+        <h3 class="font-display font-black text-2xl text-stone-900 mb-3">Doktorantura</h3>
+        <p class="text-stone-500 text-[15px] leading-relaxed mb-5">Ilmiy tadqiqot bilan shug'ullanadigan va PhD darajasini xorijda olishni rejalashtirganlar uchun.</p>
+        <ul class="space-y-2">
+          <li class="flex items-center gap-2 text-sm text-stone-600">
+            <svg class="w-4 h-4 text-stone-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Türkiye Bursları — PhD
+          </li>
+          <li class="flex items-center gap-2 text-sm text-stone-500">
+            <svg class="w-4 h-4 text-stone-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            Stipendium Hungaricum — cheklangan
+          </li>
+        </ul>
+      </article>
+    </div>
+    <p class="text-center text-stone-400 text-sm mt-8 reveal">Qaysi grant profilingizga mos ekanligi mentorlik davomida aniqlanadi.</p>
+  </div>
+</section>
+
+
 <!-- ========== 03 GRANTS ========== -->
 <section class="py-20 px-4 bg-[#FBFBFA]" id="grants">
   <div class="max-w-5xl mx-auto">
     <div class="text-center mb-12">
-      <span class="inline-block text-red-600 text-xs font-bold tracking-widest uppercase mb-3">Imkoniyatlar</span>
-      <h2 class="font-display text-[clamp(1.75rem,4vw,2.75rem)] font-black tracking-tight text-stone-900 reveal">Siz uchun imkoniyatlar</h2>
-      <p class="text-stone-500 mt-3 max-w-lg mx-auto reveal">To'liq moliyalashtiriladigan grantlar orqali xorijda o'qish imkoniyatini qo'lga kiriting.</p>
+      <span class="inline-block text-stone-400 text-xs font-bold tracking-widest uppercase mb-3">Grant dasturlari</span>
+      <h2 class="font-display text-[clamp(1.75rem,4vw,2.75rem)] font-black tracking-tight text-stone-900 reveal">Ikki to'liq grant. Bitta qaror.</h2>
+      <p class="text-stone-500 mt-3 max-w-xl mx-auto reveal">Profilingiz qaysi grant uchun mos ekanligini aniqlash — mentorlikning birinchi qadami.</p>
     </div>
-    <div class="grid md:grid-cols-2 gap-6">
-
-      <!-- Türkiye Bursları -->
-      <article class="bg-white border border-stone-200/80 rounded-2xl p-7 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 reveal-l flex flex-col">
-        <div class="flex items-start justify-between mb-5">
-          <span class="text-4xl">🇹🇷</span>
-          <span class="bg-stone-100 text-stone-700 text-xs font-semibold px-3 py-1 rounded-full border border-stone-200">Bakalavr · Magistratura · PhD</span>
-        </div>
-        <h3 class="font-display font-bold text-xl text-stone-900 mb-1">Türkiye Bursları</h3>
-        <p class="text-stone-500 text-sm mb-4">Turkiya hukumatining to'liq moliyalashtiriladigan granti.</p>
-        <p class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3">Grant nimalarni qoplaydi?</p>
-        <ul class="space-y-2 mb-5 flex-1">
-          <li class="flex items-center gap-3 text-sm text-stone-700"><span class="check-icon"><svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>Bepul ta'lim</li><li class="flex items-center gap-3 text-sm text-stone-700"><span class="check-icon"><svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>Oylik stipendiya</li><li class="flex items-center gap-3 text-sm text-stone-700"><span class="check-icon"><svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>Yotoqxona</li><li class="flex items-center gap-3 text-sm text-stone-700"><span class="check-icon"><svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>Tibbiy sug'urta</li><li class="flex items-center gap-3 text-sm text-stone-700"><span class="check-icon"><svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>Borish-qaytish aviachiptasi</li><li class="flex items-center gap-3 text-sm text-stone-700"><span class="check-icon"><svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>Tekin til kursi</li><li class="flex items-center gap-3 text-sm text-stone-700"><span class="check-icon"><svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>Bepul sayohat / oromgohlar</li>
-        </ul>
-        <div class="bg-amber-50 border-l-4 border-amber-500 rounded-r-xl p-3 mb-4">
-          <p class="text-amber-900 text-sm"><span class="font-semibold">Keyingi qabul:</span> 10-yanvar – 20-fevral 2027 atrofida <span class="text-amber-700/60 text-xs italic">(taxminiy)</span></p>
-        </div>
-        <p class="text-stone-500 text-xs leading-relaxed mb-5">Turk, ingliz, arab, fransuz va boshqa tillarda ta'lim imkoniyatlari mavjud. 1 yillik til tayyorlov kursi mavjud.</p>
-        <a href="https://t.me/jamshid_bilan?text=Assalomu%20Alaykum%2C%20mentorlik%20kursi%20bo%27yicha%20yozayapman" class="flex items-center justify-center gap-2 bg-stone-900 hover:bg-stone-800 text-white text-sm font-semibold py-3 rounded-xl transition-colors">
-          Bu grant haqida so'rash →
-        </a>
-      </article>
-
-      <!-- Stipendium Hungaricum -->
-      <article class="bg-white border border-stone-200/80 rounded-2xl p-7 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 reveal-r flex flex-col">
-        <div class="flex items-start justify-between mb-5">
-          <span class="text-4xl">🇭🇺</span>
-          <span class="bg-stone-100 text-stone-700 text-xs font-semibold px-3 py-1 rounded-full border border-stone-200">Bakalavr · Magistratura · PhD</span>
-        </div>
-        <h3 class="font-display font-bold text-xl text-stone-900 mb-1">Stipendium Hungaricum</h3>
-        <p class="text-stone-500 text-sm mb-4">Vengriya hukumatining to'liq moliyalashtiriladigan granti.</p>
-        <p class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3">Grant nimalarni qoplaydi?</p>
-        <ul class="space-y-2 mb-5 flex-1">
-          <li class="flex items-center gap-3 text-sm text-stone-700"><span class="check-icon"><svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>Bepul ta'lim</li><li class="flex items-center gap-3 text-sm text-stone-700"><span class="check-icon"><svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>Oylik stipendiya</li><li class="flex items-center gap-3 text-sm text-stone-700"><span class="check-icon"><svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>Yotoqxona</li><li class="flex items-center gap-3 text-sm text-stone-700"><span class="check-icon"><svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>Tibbiy sug'urta</li><li class="flex items-center gap-3 text-sm text-stone-700"><span class="check-icon"><svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>Tekin til kursi</li><li class="flex items-center gap-3 text-sm text-stone-700"><span class="check-icon"><svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>Shengen viza</li>
-        </ul>
-        <div class="bg-amber-50 border-l-4 border-amber-500 rounded-r-xl p-3 mb-4">
-          <p class="text-amber-900 text-sm"><span class="font-semibold">Keyingi qabul:</span> 15-noyabr 2026 – 15-yanvar 2027 atrofida <span class="text-amber-700/60 text-xs italic">(taxminiy)</span></p>
-        </div>
-        <div class="bg-red-50 border border-red-200/60 rounded-xl p-3 mb-5">
-          <p class="text-red-800 text-sm">⚠ Raqobat yuqori. Universitet, yo'nalish va hujjatlar sifati hal qiluvchi ahamiyatga ega.</p>
-        </div>
-        <a href="https://t.me/jamshid_bilan?text=Assalomu%20Alaykum%2C%20mentorlik%20kursi%20bo%27yicha%20yozayapman" class="flex items-center justify-center gap-2 bg-stone-900 hover:bg-stone-800 text-white text-sm font-semibold py-3 rounded-xl transition-colors mt-auto">
-          Bu grant haqida so'rash →
-        </a>
-      </article>
+    <div class="overflow-x-auto -mx-4 px-4">
+    <table class="w-full min-w-[640px] border-collapse reveal">
+      <thead>
+        <tr>
+          <th class="text-left py-4 px-5 text-stone-400 text-xs font-bold tracking-widest uppercase border-b border-stone-200 w-1/3"></th>
+          <th class="py-4 px-5 border-b border-stone-200 text-center w-1/3">
+            <span class="text-2xl block mb-1">🇹🇷</span>
+            <span class="font-display font-black text-stone-900 text-base block">Türkiye Bursları</span>
+            <span class="text-stone-400 text-xs">Turkiya hukumati granti</span>
+          </th>
+          <th class="py-4 px-5 border-b border-stone-200 text-center w-1/3">
+            <span class="text-2xl block mb-1">🇭🇺</span>
+            <span class="font-display font-black text-stone-900 text-base block">Stipendium Hungaricum</span>
+            <span class="text-stone-400 text-xs">Vengriya hukumati granti</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-stone-100">
+        <tr class="hover:bg-stone-50 transition-colors">
+          <td class="py-4 px-5 text-sm font-semibold text-stone-700">Darajalar</td>
+          <td class="py-4 px-5 text-sm text-stone-600 text-center">Bakalavr · Magistratura · PhD</td>
+          <td class="py-4 px-5 text-sm text-stone-600 text-center">Bakalavr · Magistratura</td>
+        </tr>
+        <tr class="hover:bg-stone-50 transition-colors">
+          <td class="py-4 px-5 text-sm font-semibold text-stone-700">O'qish to'lovi</td>
+          <td class="py-4 px-5 text-center"><span class="inline-flex items-center gap-1 text-emerald-700 font-semibold text-sm"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>To'liq bepul</span></td>
+          <td class="py-4 px-5 text-center"><span class="inline-flex items-center gap-1 text-emerald-700 font-semibold text-sm"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>To'liq bepul</span></td>
+        </tr>
+        <tr class="hover:bg-stone-50 transition-colors">
+          <td class="py-4 px-5 text-sm font-semibold text-stone-700">Oylik stipendiya</td>
+          <td class="py-4 px-5 text-sm text-stone-600 text-center">700–1 000 USD</td>
+          <td class="py-4 px-5 text-sm text-stone-600 text-center">~150–180 EUR</td>
+        </tr>
+        <tr class="hover:bg-stone-50 transition-colors">
+          <td class="py-4 px-5 text-sm font-semibold text-stone-700">Turar joy</td>
+          <td class="py-4 px-5 text-center"><span class="inline-flex items-center gap-1 text-emerald-700 font-semibold text-sm"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Bepul yotoqxona</span></td>
+          <td class="py-4 px-5 text-center"><span class="inline-flex items-center gap-1 text-emerald-700 font-semibold text-sm"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Bepul yotoqxona</span></td>
+        </tr>
+        <tr class="hover:bg-stone-50 transition-colors">
+          <td class="py-4 px-5 text-sm font-semibold text-stone-700">Sug'urta</td>
+          <td class="py-4 px-5 text-center"><span class="inline-flex items-center gap-1 text-emerald-700 font-semibold text-sm"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Bepul</span></td>
+          <td class="py-4 px-5 text-center"><span class="inline-flex items-center gap-1 text-emerald-700 font-semibold text-sm"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Bepul</span></td>
+        </tr>
+        <tr class="hover:bg-stone-50 transition-colors">
+          <td class="py-4 px-5 text-sm font-semibold text-stone-700">Chipta</td>
+          <td class="py-4 px-5 text-center"><span class="inline-flex items-center gap-1 text-emerald-700 font-semibold text-sm"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Bepul</span></td>
+          <td class="py-4 px-5 text-center"><span class="text-stone-400 text-sm">—</span></td>
+        </tr>
+        <tr class="hover:bg-stone-50 transition-colors">
+          <td class="py-4 px-5 text-sm font-semibold text-stone-700">Til tayyorgarligi</td>
+          <td class="py-4 px-5 text-center"><span class="inline-flex items-center gap-1 text-emerald-700 font-semibold text-sm"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Bepul turk tili kursi</span></td>
+          <td class="py-4 px-5 text-center"><span class="text-stone-400 text-sm">—</span></td>
+        </tr>
+        <tr class="hover:bg-stone-50 transition-colors">
+          <td class="py-4 px-5 text-sm font-semibold text-stone-700">Ariza muddati</td>
+          <td class="py-4 px-5 text-sm text-stone-600 text-center">Yanvar — Fevral</td>
+          <td class="py-4 px-5 text-sm text-stone-600 text-center">Yanvar — Mart</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="mt-8 text-center reveal">
+      <a href="https://t.me/jamshid_bilan?text=Assalomu%20Alaykum%2C%20qaysi%20grant%20menga%20mos%20ekanligini%20bilmoqchiman" class="inline-flex items-center gap-2 bg-stone-900 hover:bg-stone-800 text-white font-semibold px-6 py-3 rounded-lg transition-colors text-sm">
+        Qaysi grant menga mos? →
+      </a>
     </div>
   </div>
 </section>
@@ -226,16 +306,73 @@
     <h2 class="font-display text-[clamp(1.75rem,4vw,2.5rem)] font-black tracking-tight text-stone-900 mb-3 reveal">
       Grantga topshirish oson emas.<br><span class="text-stone-400">Yolg'iz topshirish esa shart emas.</span>
     </h2>
-    <p class="text-stone-500 mb-8 reveal">Grant dasturini topish — birinchi qadam. Asosiy savollar keyin boshlanadi:</p>
-    <div class="space-y-3 mb-10">
-      <div class="stagger-item flex items-center gap-4 p-4 bg-stone-50 border border-stone-200/80 rounded-xl hover:border-red-300 hover:bg-red-50/40 transition-all duration-200 cursor-default"><span class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0 text-sm font-bold">1</span><p class="text-stone-700 font-medium text-sm">Qaysi universitetni tanlash kerak?</p></div><div class="stagger-item flex items-center gap-4 p-4 bg-stone-50 border border-stone-200/80 rounded-xl hover:border-red-300 hover:bg-red-50/40 transition-all duration-200 cursor-default"><span class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0 text-sm font-bold">2</span><p class="text-stone-700 font-medium text-sm">Profilim yetarlimi?</p></div><div class="stagger-item flex items-center gap-4 p-4 bg-stone-50 border border-stone-200/80 rounded-xl hover:border-red-300 hover:bg-red-50/40 transition-all duration-200 cursor-default"><span class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0 text-sm font-bold">3</span><p class="text-stone-700 font-medium text-sm">CV qanday bo'lishi kerak?</p></div><div class="stagger-item flex items-center gap-4 p-4 bg-stone-50 border border-stone-200/80 rounded-xl hover:border-red-300 hover:bg-red-50/40 transition-all duration-200 cursor-default"><span class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0 text-sm font-bold">4</span><p class="text-stone-700 font-medium text-sm">Maqsad xatida nimalarni yozish kerak?</p></div><div class="stagger-item flex items-center gap-4 p-4 bg-stone-50 border border-stone-200/80 rounded-xl hover:border-red-300 hover:bg-red-50/40 transition-all duration-200 cursor-default"><span class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0 text-sm font-bold">5</span><p class="text-stone-700 font-medium text-sm">Hujjatlarda xato qildimmi?</p></div><div class="stagger-item flex items-center gap-4 p-4 bg-stone-50 border border-stone-200/80 rounded-xl hover:border-red-300 hover:bg-red-50/40 transition-all duration-200 cursor-default"><span class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0 text-sm font-bold">6</span><p class="text-stone-700 font-medium text-sm">Intervyuga qanday tayyorlanaman?</p></div>
+    <p class="text-stone-500 mb-8 max-w-xl reveal">Grant dasturini topish — birinchi qadam. Asosiy savollar keyin boshlanadi:</p>
+    <div class="space-y-2 mb-10">
+
+      <div class="faq-item border border-stone-200 rounded-lg overflow-hidden stagger-item">
+        <button class="faq-btn w-full flex items-center justify-between px-5 py-4 text-left hover:bg-stone-50 transition-colors duration-200" aria-expanded="false" onclick="toggleFaq(this)">
+          <span class="font-semibold text-stone-800 text-sm">Qaysi universitetni tanlash kerak?</span>
+          <svg class="faq-chevron w-4 h-4 text-stone-400 flex-shrink-0 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div class="faq-body px-5 pb-4 hidden text-stone-500 text-[14px] leading-relaxed">
+          Profilingiz, yo'nalishingiz va grant talablariga qarab individual tavsiyalar tayyorlanadi. Mentorlik davomida sizga mos universitetlar ro'yxati aniqlanadi.
+        </div>
+      </div>
+
+      <div class="faq-item border border-stone-200 rounded-lg overflow-hidden stagger-item">
+        <button class="faq-btn w-full flex items-center justify-between px-5 py-4 text-left hover:bg-stone-50 transition-colors duration-200" aria-expanded="false" onclick="toggleFaq(this)">
+          <span class="font-semibold text-stone-800 text-sm">Profilim yetarlimi?</span>
+          <svg class="faq-chevron w-4 h-4 text-stone-400 flex-shrink-0 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div class="faq-body px-5 pb-4 hidden text-stone-500 text-[14px] leading-relaxed">
+          Profil hech qachon "tayyor" bo'lmaydi — u qo'llaniladigan strategiyaga bog'liq. Mentorlik davomida profilingiz tahlil qilinadi va eng kuchli tomonlaringiz arizaga aks ettiriladi.
+        </div>
+      </div>
+
+      <div class="faq-item border border-stone-200 rounded-lg overflow-hidden stagger-item">
+        <button class="faq-btn w-full flex items-center justify-between px-5 py-4 text-left hover:bg-stone-50 transition-colors duration-200" aria-expanded="false" onclick="toggleFaq(this)">
+          <span class="font-semibold text-stone-800 text-sm">CV qanday bo'lishi kerak?</span>
+          <svg class="faq-chevron w-4 h-4 text-stone-400 flex-shrink-0 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div class="faq-body px-5 pb-4 hidden text-stone-500 text-[14px] leading-relaxed">
+          Grant ariza CV-si oddiy ish CV-sidan farq qiladi. Mentorlik davomida CV-ingiz grant qo'mitasi ko'zi bilan ko'rib chiqiladi va kerakli tuzatishlar kiritiladi.
+        </div>
+      </div>
+
+      <div class="faq-item border border-stone-200 rounded-lg overflow-hidden stagger-item">
+        <button class="faq-btn w-full flex items-center justify-between px-5 py-4 text-left hover:bg-stone-50 transition-colors duration-200" aria-expanded="false" onclick="toggleFaq(this)">
+          <span class="font-semibold text-stone-800 text-sm">Maqsad xatida nimalarni yozish kerak?</span>
+          <svg class="faq-chevron w-4 h-4 text-stone-400 flex-shrink-0 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div class="faq-body px-5 pb-4 hidden text-stone-500 text-[14px] leading-relaxed">
+          Motivatsiya xati shablonlar bilan yozilmaydi — bu sizning shaxsiy tarixi va kelajak rejangizni aks ettirishi kerak. Mentorlik davomida original, kuchli xat yozishga yo'l-yo'riq beriladi.
+        </div>
+      </div>
+
+      <div class="faq-item border border-stone-200 rounded-lg overflow-hidden stagger-item">
+        <button class="faq-btn w-full flex items-center justify-between px-5 py-4 text-left hover:bg-stone-50 transition-colors duration-200" aria-expanded="false" onclick="toggleFaq(this)">
+          <span class="font-semibold text-stone-800 text-sm">Hujjatlarda xato qildimmi?</span>
+          <svg class="faq-chevron w-4 h-4 text-stone-400 flex-shrink-0 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div class="faq-body px-5 pb-4 hidden text-stone-500 text-[14px] leading-relaxed">
+          Ko'p talabalar xuddi shu savolni beradi. Hujjatlaringiz mentorlik davomida ko'rib chiqiladi va barcha muhim jihatlar tekshiriladi. Xatolarni topishdan ko'ra ularni oldini olish yaxshiroq.
+        </div>
+      </div>
+
+      <div class="faq-item border border-stone-200 rounded-lg overflow-hidden stagger-item">
+        <button class="faq-btn w-full flex items-center justify-between px-5 py-4 text-left hover:bg-stone-50 transition-colors duration-200" aria-expanded="false" onclick="toggleFaq(this)">
+          <span class="font-semibold text-stone-800 text-sm">Intervyuga qanday tayyorlanaman?</span>
+          <svg class="faq-chevron w-4 h-4 text-stone-400 flex-shrink-0 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div class="faq-body px-5 pb-4 hidden text-stone-500 text-[14px] leading-relaxed">
+          Standard va VIP paketlarda individual sinov intervyusi o'tkaziladi. Keng tarqalgan savollar, to'g'ri javob texnikasi va o'zingizni taqdim etish usullari o'rgatiladi.
+        </div>
+      </div>
+
     </div>
-    <p class="text-stone-600 text-[15px] leading-relaxed mb-6 reveal">
-      Mentorlikning maqsadi — shu jarayonni tartibli va tushunarli qilish. Siz qayerdan boshlashni, nima tayyorlashni va qaysi bosqichda nimalarga e'tibor berishni bilasiz.
-    </p>
-    <div class="bg-gradient-to-r from-red-600 to-red-700 rounded-2xl p-6 text-white shadow-lg shadow-red-600/20 reveal">
+    <div class="bg-stone-900 rounded-lg p-6 text-white reveal">
       <p class="font-display font-bold text-xl mb-1">Tartibli jarayon → yaxshiroq tayyorgarlik</p>
-      <p class="text-white/70 text-sm">* Grant yutish kafolatlanmaydi. Mentorlik tayyorgarlik va hujjatlar jarayoniga yordam beradi.</p>
+      <p class="text-white/50 text-sm mt-1">Grant yutish kafolatlanmaydi. Mentorlik jarayonni tushunishga va hujjatlarni kuchaytirishga yordam beradi.</p>
     </div>
   </div>
 </section>
@@ -257,11 +394,50 @@
         <h2 class="font-display text-[clamp(1.75rem,4vw,2.75rem)] font-black tracking-tight text-white mb-2">Men ham bu yo'ldan o'tganman.</h2>
         <p class="font-display font-bold text-xl text-white mb-0.5">Jamshid Murodboev</p>
         <p class="text-white/40 text-xs uppercase tracking-widest mb-5">Scholarship Mentor &amp; Consultant</p>
-        <p class="text-white/65 text-[15px] leading-[1.8] mb-6">
-          2023-yilda Türkiye Bursları to'liq grantini shaxsan yutganman.<br><br>
-          Shundan beri 100+ talabaga Turkiyadagi universitetlarga kirishda ko'maklashdim va 10+ talabaga Türkiye Bursları hamda boshqa to'liq grantlarni yutishda yordam berdim.<br><br>
-          Bugun esa shu tajribani tizimli mentorlik orqali siz bilan bo'lishaman.
+        <p class="text-white/65 text-[15px] leading-[1.8] mb-7">
+          2023-yilda Türkiye Bursları to'liq grantini shaxsan yutganman. Shundan beri 100+ talabaga mentorlik qildim va ular ichida 10+ nafar talaba to'liq grant sohibi bo'ldi.
         </p>
+        <div class="space-y-4 mb-7">
+          <div class="flex items-start gap-4">
+            <div class="flex flex-col items-center flex-shrink-0">
+              <span class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white text-xs font-bold">1</span>
+              <div class="w-0.5 bg-white/10 flex-1 mt-1 min-h-[24px]"></div>
+            </div>
+            <div class="pb-2">
+              <p class="text-white/40 text-xs uppercase tracking-widest mb-0.5">2023</p>
+              <p class="text-white font-semibold text-sm">Türkiye Bursları — to'liq grant sohibi</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <div class="flex flex-col items-center flex-shrink-0">
+              <span class="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white text-xs font-bold">2</span>
+              <div class="w-0.5 bg-white/10 flex-1 mt-1 min-h-[24px]"></div>
+            </div>
+            <div class="pb-2">
+              <p class="text-white/40 text-xs uppercase tracking-widest mb-0.5">2023 – hozir</p>
+              <p class="text-white font-semibold text-sm">2× Erasmus+ stipendiyasi</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <div class="flex flex-col items-center flex-shrink-0">
+              <span class="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white text-xs font-bold">3</span>
+              <div class="w-0.5 bg-white/10 flex-1 mt-1 min-h-[24px]"></div>
+            </div>
+            <div class="pb-2">
+              <p class="text-white/40 text-xs uppercase tracking-widest mb-0.5">4 yil</p>
+              <p class="text-white font-semibold text-sm">100+ talabaga mentorlik</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0">
+              <span class="w-8 h-8 rounded-full bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-400 text-xs font-bold">4</span>
+            </div>
+            <div>
+              <p class="text-white/40 text-xs uppercase tracking-widest mb-0.5">Natija</p>
+              <p class="text-white font-semibold text-sm">10+ talaba — to'liq grant g'olibi</p>
+            </div>
+          </div>
+        </div>
         <div class="flex flex-wrap gap-2 mb-7">
           <span class="glass rounded-full px-3 py-1.5 text-xs font-semibold text-white/80">IELTS 7.5</span><span class="glass rounded-full px-3 py-1.5 text-xs font-semibold text-white/80">TOEFL iBT 102</span><span class="glass rounded-full px-3 py-1.5 text-xs font-semibold text-white/80">TOMER C1+C2</span><span class="glass rounded-full px-3 py-1.5 text-xs font-semibold text-white/80">2× Erasmus+</span>
         </div>
@@ -277,7 +453,7 @@
 <section class="py-20 px-4 bg-[#FBFBFA]" id="results">
   <div class="max-w-6xl mx-auto">
     <div class="text-center mb-12">
-      <span class="inline-block text-red-600 text-xs font-bold tracking-widest uppercase mb-3">Talabalar natijalari</span>
+      <span class="inline-block text-stone-500 text-xs font-bold tracking-widest uppercase mb-3">Talabalar natijalari</span>
       <h2 class="font-display text-[clamp(1.75rem,4vw,2.75rem)] font-black tracking-tight text-stone-900 reveal">Natija gapdan kuchliroq.</h2>
       <p class="text-stone-500 mt-3 reveal">Real talabalar. Real universitetlar. Real grantlar.</p>
     </div>
@@ -497,7 +673,7 @@
 <section class="py-20 px-4 bg-white" id="how">
   <div class="max-w-3xl mx-auto">
     <div class="text-center mb-12">
-      <span class="inline-block text-red-600 text-xs font-bold tracking-widest uppercase mb-3">Jarayon</span>
+      <span class="inline-block text-stone-400 text-xs font-bold tracking-widest uppercase mb-3">Jarayon</span>
       <h2 class="font-display text-[clamp(1.75rem,4vw,2.75rem)] font-black tracking-tight text-stone-900 reveal">Mentorlik qanday ishlaydi?</h2>
     </div>
     <div class="space-y-0">
@@ -555,6 +731,80 @@
     </div>
   </div>
 </section>
+
+<!-- ========== WHAT YOU GET ========== -->
+<section class="py-20 px-4 bg-[#FBFBFA]" id="whatyouget">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-12">
+      <span class="inline-block text-stone-400 text-xs font-bold tracking-widest uppercase mb-3">Nima olasiz?</span>
+      <h2 class="font-display text-[clamp(1.75rem,4vw,2.75rem)] font-black tracking-tight text-stone-900 reveal">Mentorlikda siz nimalarga ega bo'lasiz?</h2>
+      <p class="text-stone-500 mt-3 max-w-lg mx-auto reveal">Dasturingiz darajasiga qarab, quyidagi yordamlardan foydalanasiz.</p>
+    </div>
+    <div class="grid md:grid-cols-2 gap-10 items-start">
+      <div class="space-y-4 reveal-l">
+        <div class="flex items-start gap-4">
+          <svg class="w-5 h-5 text-stone-900 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          <div>
+            <p class="font-semibold text-stone-900 text-[15px]">Grant yo'nalishini aniqlash</p>
+            <p class="text-stone-400 text-sm mt-0.5">Türkiye Bursları yoki Stipendium Hungaricum — profilingizga mos variant</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4">
+          <svg class="w-5 h-5 text-stone-900 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          <div>
+            <p class="font-semibold text-stone-900 text-[15px]">Profil tahlili va strategiya</p>
+            <p class="text-stone-400 text-sm mt-0.5">Kuchli tomonlaringizni aniqlash va arizada to'g'ri ko'rsatish</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4">
+          <svg class="w-5 h-5 text-stone-900 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          <div>
+            <p class="font-semibold text-stone-900 text-[15px]">Universitetlar va yo'nalishlarni tanlash</p>
+            <p class="text-stone-400 text-sm mt-0.5">Profil va maqsadingizga mos universitetlar ro'yxati</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4">
+          <svg class="w-5 h-5 text-stone-900 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          <div>
+            <p class="font-semibold text-stone-900 text-[15px]">CV tayyorlash va tekshirish</p>
+            <p class="text-stone-400 text-sm mt-0.5">Grant qo'mitasi ko'zi bilan ko'rib chiqiladi</p>
+          </div>
+        </div>
+      </div>
+      <div class="space-y-4 reveal-r">
+        <div class="flex items-start gap-4">
+          <svg class="w-5 h-5 text-stone-900 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          <div>
+            <p class="font-semibold text-stone-900 text-[15px]">Motivation Letter bo'yicha yo'riqnoma</p>
+            <p class="text-stone-400 text-sm mt-0.5">Original, kuchli xat yozish — shablonsiz yondashuv</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4">
+          <svg class="w-5 h-5 text-stone-900 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          <div>
+            <p class="font-semibold text-stone-900 text-[15px]">Tavsiyanoma olish yo'riqnomasi</p>
+            <p class="text-stone-400 text-sm mt-0.5">Kimdan olish kerak va qanday so'rash kerakligi</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4">
+          <svg class="w-5 h-5 text-stone-900 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          <div>
+            <p class="font-semibold text-stone-900 text-[15px]">Hujjatlar ro'yxati va tekshiruv</p>
+            <p class="text-stone-400 text-sm mt-0.5">Ariza berish oldidan barcha hujjatlar kompleks tekshiriladi</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4">
+          <svg class="w-5 h-5 text-stone-900 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          <div>
+            <p class="font-semibold text-stone-900 text-[15px]">Sinov intervyusi va tayyorgarlik</p>
+            <p class="text-stone-400 text-sm mt-0.5">Standard va VIP paketlarda individual intervyu mashqi</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 
 <!-- ========== 08 PACKAGES ========== -->
 <section class="py-20 px-4 bg-[#FBFBFA]" id="packages">
@@ -645,7 +895,7 @@
     <div class="mt-14">
       <h3 class="font-display font-bold text-xl text-stone-900 text-center mb-6 reveal">Qaysi paket sizga mos?</h3>
       <div class="grid md:grid-cols-3 gap-4">
-        <div class="bg-stone-100 text-stone-700 rounded-2xl p-5 text-center stagger-item"><span class="text-2xl mb-2 block">📚</span><p class="font-semibold text-sm mb-1">"Men mustaqil ishlay olaman."</p><p class="text-xs text-stone-500 mb-2">Video darslarni ko'rib, topshiriqlarni o'zim bajaraman.</p><p class="font-bold text-sm">→ Basic</p></div><div class="bg-red-600 text-white shadow-lg shadow-red-600/20 rounded-2xl p-5 text-center stagger-item"><span class="text-2xl mb-2 block">🎯</span><p class="font-semibold text-sm mb-1">"Men xato qilishni istamayman."</p><p class="text-xs text-white/70 mb-2">Mentorning fikri, tekshiruvi va yo'nalishi kerak.</p><p class="font-bold text-sm">→ Standard ⭐</p></div><div class="bg-stone-100 text-stone-700 rounded-2xl p-5 text-center stagger-item"><span class="text-2xl mb-2 block">👤</span><p class="font-semibold text-sm mb-1">"Shaxsan mentor bilan ishlamoqchiman."</p><p class="text-xs text-stone-500 mb-2">Hujjatlarim va arizam bo'yicha individual yordam kerak.</p><p class="font-bold text-sm">→ VIP</p></div>
+        <div class="bg-stone-100 text-stone-700 rounded-2xl p-5 text-center stagger-item"><p class="font-semibold text-sm mb-1">"Men mustaqil ishlay olaman."</p><p class="text-xs text-stone-500 mb-2">Video darslarni ko'rib, topshiriqlarni o'zim bajaraman.</p><p class="font-bold text-sm">→ Basic</p></div><div class="bg-red-600 text-white shadow-lg shadow-red-600/20 rounded-2xl p-5 text-center stagger-item"><p class="font-semibold text-sm mb-1">"Men xato qilishni istamayman."</p><p class="text-xs text-white/70 mb-2">Mentorning fikri, tekshiruvi va yo'nalishi kerak.</p><p class="font-bold text-sm">→ Standard ⭐</p></div><div class="bg-stone-100 text-stone-700 rounded-2xl p-5 text-center stagger-item"><p class="font-semibold text-sm mb-1">"Shaxsan mentor bilan ishlamoqchiman."</p><p class="text-xs text-stone-500 mb-2">Hujjatlarim va arizam bo'yicha individual yordam kerak.</p><p class="font-bold text-sm">→ VIP</p></div>
       </div>
     </div>
   </div>
@@ -655,7 +905,7 @@
 <section class="py-20 px-4 bg-white" id="discounts">
   <div class="max-w-3xl mx-auto">
     <div class="text-center mb-10">
-      <span class="inline-block text-red-600 text-xs font-bold tracking-widest uppercase mb-3">Chegirmalar</span>
+      <span class="inline-block text-stone-400 text-xs font-bold tracking-widest uppercase mb-3">Chegirmalar</span>
       <h2 class="font-display text-[clamp(1.75rem,4vw,2.75rem)] font-black tracking-tight text-stone-900 reveal">Sizga chegirma tegishlimi?</h2>
     </div>
     <div class="grid md:grid-cols-2 gap-5 mb-8">
@@ -688,12 +938,52 @@
   </div>
 </section>
 
+<!-- ========== GUARANTEE ========== -->
+<section class="py-20 px-4 bg-[#FBFBFA]" id="guarantee">
+  <div class="max-w-3xl mx-auto">
+    <div class="text-center mb-10">
+      <span class="inline-block text-stone-400 text-xs font-bold tracking-widest uppercase mb-3">Kafolat haqida</span>
+      <h2 class="font-display text-[clamp(1.75rem,4vw,2.5rem)] font-black tracking-tight text-stone-900 reveal">Grant yutish kafolatlanadimi?</h2>
+    </div>
+    <div class="grid md:grid-cols-2 gap-8 reveal">
+      <div class="border border-stone-200 rounded-lg p-7">
+        <p class="font-display font-black text-lg text-stone-900 mb-3">Yo'q.</p>
+        <p class="text-stone-500 text-[15px] leading-relaxed">
+          Birorta maslahatchi yoki mentor kimgadir grantni kafolat bera olmaydi. Bu fakt, va biz buni ochiq aytamiz. Grant komissiyasi qaror qabul qiladi — bu bizning qo'limizda emas.
+        </p>
+      </div>
+      <div class="border border-stone-200 rounded-lg p-7">
+        <p class="font-display font-black text-lg text-stone-900 mb-3">Nima kafolatlanadi?</p>
+        <ul class="space-y-3">
+          <li class="flex items-start gap-3 text-[15px] text-stone-600">
+            <svg class="w-4 h-4 text-stone-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Tizimli va tartibli tayyorgarlik jarayoni
+          </li>
+          <li class="flex items-start gap-3 text-[15px] text-stone-600">
+            <svg class="w-4 h-4 text-stone-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Hujjatlaringizga tajribali ko'z bilan qaralishi
+          </li>
+          <li class="flex items-start gap-3 text-[15px] text-stone-600">
+            <svg class="w-4 h-4 text-stone-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Arizangizning iloji boricha kuchli bo'lishi
+          </li>
+          <li class="flex items-start gap-3 text-[15px] text-stone-600">
+            <svg class="w-4 h-4 text-stone-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Butun jarayon davomida yo'nalish va qo'llab-quvvatlash
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
 <!-- ========== 10 FAQ ========== -->
 <section class="py-20 px-4 bg-[#FBFBFA]" id="faq">
   <div class="max-w-2xl mx-auto">
     <div class="text-center mb-10">
-      <span class="inline-block text-red-600 text-xs font-bold tracking-widest uppercase mb-3">Savollar</span>
-      <h2 class="font-display text-[clamp(1.75rem,4vw,2.5rem)] font-black tracking-tight text-stone-900 reveal">Ko'p beriladigan savollar</h2>
+      <span class="inline-block text-stone-400 text-xs font-bold tracking-widest uppercase mb-3">Savollar</span>
+      <h2 class="font-display text-[clamp(1.75rem,4vw,2.5rem)] font-black tracking-tight text-stone-900 reveal">Tez-tez so'raladigan savollar</h2>
     </div>
     
         <div class="faq-item bg-white border border-stone-200/80 rounded-2xl overflow-hidden mb-3 shadow-sm">
@@ -791,7 +1081,7 @@
 </section>
 
 <!-- ========== FOOTER ========== -->
-<footer class="bg-[#0B0F17] border-t border-white/5 py-10 px-4">
+<footer class="bg-[#111111] border-t border-white/5 py-10 px-4">
   <div class="max-w-5xl mx-auto">
     <div class="flex flex-col md:flex-row items-center justify-between gap-6">
       <div class="text-center md:text-left">
