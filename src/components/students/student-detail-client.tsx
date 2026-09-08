@@ -21,7 +21,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, Plus, Pencil, Trash2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ChevronLeft, Plus, Pencil, Trash2, GraduationCap, Phone, Calendar } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 
 interface Payment {
@@ -187,50 +188,89 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
     router.push("/students");
   }
 
-  if (loading) return <div className="text-muted-foreground">Loading…</div>;
+  if (loading) return <StudentDetailSkeleton />;
   if (!student) return <div className="text-muted-foreground">Student not found.</div>;
 
   const totalDue = student.payments.reduce((sum, p) => sum + p.amountDue, 0);
   const totalPaid = student.payments.reduce((sum, p) => sum + p.amountPaid, 0);
 
+  const initials = student.fullName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => router.back()}>
-            <ChevronLeft className="mr-1 h-4 w-4" /> Back
-          </Button>
-          <h1 className="text-2xl font-bold">{student.fullName}</h1>
-          <Badge variant={student.finalResult === "WON" ? "success" : student.finalResult === "REJECTED" ? "destructive" : "secondary"}>
-            {student.finalResult}
-          </Badge>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="mr-1 h-4 w-4" /> Edit
-          </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm"><Trash2 className="mr-1 h-4 w-4" />Archive</Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Archive Student</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will hide the student from active lists. Payment history is preserved.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={archiveStudent}>Archive</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+      {/* Back button */}
+      <Button variant="ghost" size="sm" className="-ml-2" onClick={() => router.back()}>
+        <ChevronLeft className="mr-1 h-4 w-4" /> Back to Students
+      </Button>
+
+      {/* Profile Card */}
+      <div className="rounded-xl border bg-card p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xl font-bold">
+              {initials}
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl font-bold">{student.fullName}</h1>
+                <Badge variant={student.finalResult === "WON" ? "success" : student.finalResult === "REJECTED" ? "destructive" : "secondary"}>
+                  {student.finalResult}
+                </Badge>
+              </div>
+              <div className="mt-1.5 flex flex-wrap gap-3 text-sm text-muted-foreground">
+                {student.degree && (
+                  <span className="flex items-center gap-1">
+                    <GraduationCap className="h-3.5 w-3.5" />
+                    {student.degree}{student.major ? ` · ${student.major}` : ""}
+                  </span>
+                )}
+                {student.phone && (
+                  <span className="flex items-center gap-1">
+                    <Phone className="h-3.5 w-3.5" /> {student.phone}
+                  </span>
+                )}
+                {student.dob && (
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3.5 w-3.5" /> {formatDate(student.dob)}
+                  </span>
+                )}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <Badge variant="outline" className="text-xs">{student.batch.name}</Badge>
+                {student.package && <Badge variant="outline" className="text-xs">{student.package.name}</Badge>}
+                {student.scholarships.map(({ scholarship: s }) => (
+                  <Badge key={s.id} variant="secondary" className="text-xs">{s.shortCode}</Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+              <Pencil className="mr-1 h-4 w-4" /> Edit
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm"><Trash2 className="mr-1 h-4 w-4" />Archive</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Archive Student</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will hide the student from active lists. Payment history is preserved.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={archiveStudent}>Archive</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
       </div>
 
       {/* Quick Stage Selector */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <span className="text-sm font-medium text-muted-foreground">Stage:</span>
         <div className="flex flex-wrap gap-2">
           {stages.map((s) => (
@@ -492,6 +532,35 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
           </form>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function StudentDetailSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Skeleton className="h-8 w-32" />
+      <div className="rounded-xl border bg-card p-6">
+        <div className="flex items-start gap-4">
+          <Skeleton className="h-16 w-16 rounded-full" />
+          <div className="space-y-2 flex-1">
+            <Skeleton className="h-7 w-48" />
+            <Skeleton className="h-4 w-64" />
+            <div className="flex gap-2 mt-1">
+              <Skeleton className="h-5 w-20 rounded-full" />
+              <Skeleton className="h-5 w-20 rounded-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="rounded-lg border p-4 space-y-3">
+          {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-4 w-full" />)}
+        </div>
+        <div className="rounded-lg border p-4 space-y-3">
+          {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-4 w-full" />)}
+        </div>
+      </div>
     </div>
   );
 }

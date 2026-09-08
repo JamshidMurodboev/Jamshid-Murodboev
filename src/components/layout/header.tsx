@@ -1,5 +1,5 @@
 "use client";
-import { Moon, Sun, Monitor } from "lucide-react";
+import { Moon, Sun, Monitor, Menu } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,15 +9,31 @@ import {
 interface HeaderProps {
   userName: string;
   userRole: string;
+  onMenuClick?: () => void;
 }
 
-export function Header({ userName, userRole }: HeaderProps) {
+function getInitials(name: string) {
+  return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+}
+
+export function Header({ userName, userRole, onMenuClick }: HeaderProps) {
   const { setTheme } = useTheme();
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-background px-6">
-      <div />
-      <div className="flex items-center gap-4">
+    <header className="flex h-16 items-center justify-between border-b bg-background px-4 md:px-6">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="md:hidden"
+        onClick={onMenuClick}
+        aria-label="Open menu"
+      >
+        <Menu className="h-5 w-5" />
+      </Button>
+
+      <div className="hidden md:block" />
+
+      <div className="flex items-center gap-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
@@ -39,9 +55,14 @@ export function Header({ userName, userRole }: HeaderProps) {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <div className="text-right">
-          <p className="text-sm font-medium">{userName}</p>
-          <p className="text-xs text-muted-foreground capitalize">{userRole.toLowerCase()}</p>
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+            {getInitials(userName)}
+          </div>
+          <div className="text-right hidden sm:block">
+            <p className="text-sm font-medium leading-none">{userName}</p>
+            <p className="text-xs text-muted-foreground mt-0.5 capitalize">{userRole.toLowerCase()}</p>
+          </div>
         </div>
       </div>
     </header>

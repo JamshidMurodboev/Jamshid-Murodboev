@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -17,8 +19,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search } from "lucide-react";
-import { formatDate, formatCurrency } from "@/lib/utils";
+import { Plus, Search, Users, LayoutGrid, List } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 interface Batch { id: string; name: string }
 interface Package { id: string; name: string; listPrice: number }
@@ -37,7 +39,6 @@ interface Student {
 }
 
 const DEGREES = ["BACHELOR", "MASTER", "PHD", "EXCHANGE"];
-const RESULTS = ["PENDING", "WON", "REJECTED"];
 
 export function StudentsClient() {
   const router = useRouter();
@@ -55,6 +56,7 @@ export function StudentsClient() {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedBatch, setSelectedBatch] = useState(searchParams.get("batchId") ?? "all");
+  const [view, setView] = useState<"table" | "kanban">("table");
 
   const loadStudents = useCallback(async () => {
     const params = new URLSearchParams();
@@ -119,7 +121,7 @@ export function StudentsClient() {
       if (!res.ok) throw new Error("Failed");
       await loadStudents();
       setOpen(false);
-      toast({ title: "Student added" });
+      toast({ title: "Student added successfully" });
     } catch {
       toast({ title: "Error", description: "Failed to add student", variant: "destructive" });
     } finally {
@@ -138,8 +140,8 @@ export function StudentsClient() {
         </Button>
       </div>
 
-      <div className="flex gap-3">
-        <div className="relative flex-1 max-w-xs">
+      <div className="flex flex-wrap gap-3">
+        <div className="relative flex-1 min-w-[200px] max-w-xs">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
@@ -159,55 +161,81 @@ export function StudentsClient() {
             ))}
           </SelectContent>
         </Select>
+        <div className="flex rounded-md border overflow-hidden">
+          <button
+            onClick={() => setView("table")}
+            className={`flex items-center gap-1.5 px-3 py-2 text-sm transition-colors ${
+              view === "table" ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+            }`}
+          >
+            <List className="h-3.5 w-3.5" /> Table
+          </button>
+          <button
+            onClick={() => setView("kanban")}
+            className={`flex items-center gap-1.5 px-3 py-2 text-sm transition-colors ${
+              view === "kanban" ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+            }`}
+          >
+            <LayoutGrid className="h-3.5 w-3.5" /> Kanban
+          </button>
+        </div>
       </div>
 
       {loading ? (
-        <div className="text-muted-foreground">Loading…</div>
+        <TableSkeleton />
       ) : students.length === 0 ? (
-        <div className="rounded-md border py-12 text-center text-sm text-muted-foreground">
-          No students found.
-        </div>
+        <EmptyState onAdd={() => setOpen(true)} />
+      ) : view === "kanban" ? (
+        <KanbanView students={students} stages={stages} balance={balance} onNavigate={(id) => router.push(`/students/${id}`)} />
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Batch</TableHead>
-              <TableHead>Package</TableHead>
-              <TableHead>Scholarships</TableHead>
-              <TableHead>Stage</TableHead>
-              <TableHead>Balance</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {students.map((s) => (
-              <TableRow
-                key={s.id}
-                className="cursor-pointer"
-                onClick={() => router.push(`/students/${s.id}`)}
-              >
-                <TableCell className="font-medium">{s.fullName}</TableCell>
-                <TableCell className="text-sm text-muted-foreground">{s.batch.name}</TableCell>
-                <TableCell>{s.package?.name ?? "—"}</TableCell>
-                <TableCell>
-                  <div className="flex flex-wrap gap-1">
-                    {s.scholarships.map(({ scholarship: sc }) => (
-                      <Badge key={sc.id} variant="outline" className="text-xs">{sc.shortCode}</Badge>
-                    ))}
-                  </div>
-                </TableCell>
-                <TableCell>{s.progressStage?.name ?? "—"}</TableCell>
-                <TableCell>
-                  {s.payments.length === 0 ? "—" : (
-                    <span className={balance(s) > 0 ? "text-destructive font-medium" : "text-green-600"}>
-                      {balance(s) > 0 ? formatCurrency(balance(s)) : "Paid"}
-                    </span>
-                  )}
-                </TableCell>
+        <div className="rounded-md border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/40">
+                <TableHead>Name</TableHead>
+                <TableHead>Batch</TableHead>
+                <TableHead>Package</TableHead>
+                <TableHead>Scholarships</TableHead>
+                <TableHead>Stage</TableHead>
+                <TableHead>Balance</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {students.map((s) => (
+                <TableRow
+                  key={s.id}
+                  className="cursor-pointer hover:bg-muted/30 transition-colors"
+                  onClick={() => router.push(`/students/${s.id}`)}
+                >
+                  <TableCell className="font-medium">{s.fullName}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{s.batch.name}</TableCell>
+                  <TableCell>{s.package?.name ?? <span className="text-muted-foreground">—</span>}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {s.scholarships.map(({ scholarship: sc }) => (
+                        <Badge key={sc.id} variant="outline" className="text-xs">{sc.shortCode}</Badge>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {s.progressStage ? (
+                      <Badge variant="secondary" className="text-xs">{s.progressStage.name}</Badge>
+                    ) : <span className="text-muted-foreground">—</span>}
+                  </TableCell>
+                  <TableCell>
+                    {s.payments.length === 0 ? (
+                      <span className="text-muted-foreground">—</span>
+                    ) : (
+                      <span className={`font-medium ${balance(s) > 0 ? "text-destructive" : "text-green-600 dark:text-green-400"}`}>
+                        {balance(s) > 0 ? formatCurrency(balance(s)) : "Paid"}
+                      </span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -228,7 +256,6 @@ export function StudentsClient() {
                 <Input id="dob" name="dob" type="date" />
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Batch *</Label>
@@ -249,7 +276,6 @@ export function StudentsClient() {
                 </Select>
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Degree</Label>
@@ -265,7 +291,6 @@ export function StudentsClient() {
                 <Input id="major" name="major" />
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="priceCharged">Price Charged (UZS)</Label>
@@ -276,14 +301,11 @@ export function StudentsClient() {
                 <Select name="discountTypeId">
                   <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
                   <SelectContent>
-                    {discounts.filter((d) => d).map((d) => (
-                      <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                    ))}
+                    {discounts.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
             </div>
-
             <div className="space-y-2">
               <Label>Progress Stage</Label>
               <Select name="progressStageId">
@@ -293,11 +315,10 @@ export function StudentsClient() {
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
               <Label>Scholarships Applying For</Label>
               <div className="flex flex-wrap gap-2">
-                {scholarships.filter((s) => s).map((s) => (
+                {scholarships.map((s) => (
                   <label key={s.id} className="flex items-center gap-1.5 text-sm cursor-pointer">
                     <input type="checkbox" name="scholarshipIds" value={s.id} className="rounded" />
                     {s.shortCode} — {s.name}
@@ -305,12 +326,10 @@ export function StudentsClient() {
                 ))}
               </div>
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="notes">Notes</Label>
               <Textarea id="notes" name="notes" rows={3} />
             </div>
-
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={saving}>{saving ? "Adding…" : "Add Student"}</Button>
@@ -318,6 +337,109 @@ export function StudentsClient() {
           </form>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function KanbanView({ students, stages, balance, onNavigate }: {
+  students: Student[];
+  stages: ProgressStage[];
+  balance: (s: Student) => number;
+  onNavigate: (id: string) => void;
+}) {
+  const unstaged = students.filter((s) => !s.progressStage);
+  const columns = [
+    ...stages.map((stage) => ({
+      id: stage.id,
+      name: stage.name,
+      students: students.filter((s) => s.progressStage?.id === stage.id),
+    })),
+    ...(unstaged.length > 0 ? [{ id: "none", name: "No Stage", students: unstaged }] : []),
+  ];
+
+  return (
+    <div className="flex gap-4 overflow-x-auto pb-4">
+      {columns.map((col) => (
+        <div key={col.id} className="w-64 shrink-0">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-semibold">{col.name}</h3>
+            <Badge variant="secondary" className="text-xs">{col.students.length}</Badge>
+          </div>
+          <div className="space-y-2">
+            {col.students.length === 0 ? (
+              <div className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
+                No students
+              </div>
+            ) : (
+              col.students.map((s) => (
+                <Card
+                  key={s.id}
+                  className="cursor-pointer transition-shadow hover:shadow-md"
+                  onClick={() => onNavigate(s.id)}
+                >
+                  <CardContent className="p-3">
+                    <p className="font-medium text-sm leading-tight">{s.fullName}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{s.batch.name}</p>
+                    <div className="mt-2 flex items-center justify-between">
+                      <div className="flex gap-1 flex-wrap">
+                        {s.scholarships.map(({ scholarship: sc }) => (
+                          <Badge key={sc.id} variant="outline" className="text-[10px] px-1 py-0">{sc.shortCode}</Badge>
+                        ))}
+                      </div>
+                      {s.payments.length > 0 && (
+                        <span className={`text-xs font-medium ${balance(s) > 0 ? "text-destructive" : "text-green-600 dark:text-green-400"}`}>
+                          {balance(s) > 0 ? formatCurrency(balance(s)) : "Paid"}
+                        </span>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EmptyState({ onAdd }: { onAdd: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+        <Users className="h-6 w-6 text-muted-foreground" />
+      </div>
+      <h3 className="mt-4 text-base font-semibold">No students yet</h3>
+      <p className="mt-1 text-sm text-muted-foreground">Add your first student to get started.</p>
+      <Button className="mt-4" size="sm" onClick={onAdd}>
+        <Plus className="mr-2 h-4 w-4" /> Add Student
+      </Button>
+    </div>
+  );
+}
+
+function TableSkeleton() {
+  return (
+    <div className="rounded-md border overflow-hidden">
+      <div className="bg-muted/40 p-3">
+        <div className="grid grid-cols-6 gap-4">
+          {["Name", "Batch", "Package", "Scholarships", "Stage", "Balance"].map((h) => (
+            <Skeleton key={h} className="h-4 w-16" />
+          ))}
+        </div>
+      </div>
+      {[...Array(5)].map((_, i) => (
+        <div key={i} className="border-t p-4">
+          <div className="grid grid-cols-6 gap-4">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-5 w-20 rounded-full" />
+            <Skeleton className="h-4 w-20" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
