@@ -195,7 +195,7 @@ function ExportLayout({
   }
 
   return (
-    <div style={{ width: 1920, height: 1080, background: "#faf7f2", fontFamily: "'Segoe UI', Arial, sans-serif", display: "flex", flexDirection: "column", padding: "40px 48px 32px", boxSizing: "border-box" }}>
+    <div style={{ width: 1920, height: 1080, background: "#faf7f2", color: "#1a1a1a", fontFamily: "'Segoe UI', Arial, sans-serif", display: "flex", flexDirection: "column", padding: "40px 48px 32px", boxSizing: "border-box" }}>
       <div style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 22, fontWeight: 700, color: "#1a1a1a" }}>{UZ.attendance.title}</div>
         <div style={{ fontSize: 14, color: "#555", marginTop: 4 }}>{batchName}</div>
@@ -281,7 +281,7 @@ function ExportWarningList({ students, lessons, marks, maxMissed, maxExcused }: 
   if (entries.length === 0) return null;
   return (
     <div style={{ marginTop: 12 }}>
-      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, color: "#1a1a1a" }}>{UZ.attendance.warningSectionTitle}</div>
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, color: "#1a1a1a", marginTop: 12 }}>{UZ.attendance.warningSectionTitle}</div>
       <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 12 }}>
         <thead>
           <tr style={{ background: "#FFFBEB" }}>
@@ -746,8 +746,8 @@ export function AttendanceTable({
         </>
       )}
 
-      {/* Off-screen export layout — kept just above the viewport so the browser paints text */}
-      <div ref={exportRef} aria-hidden="true" style={{ position: "fixed", top: "-1100px", left: 0, width: 1920, height: 1080, pointerEvents: "none", fontFamily: "'Segoe UI', Arial, sans-serif", zIndex: -1 }}>
+      {/* Off-screen export layout */}
+      <div ref={exportRef} aria-hidden="true" style={{ position: "fixed", top: 0, left: "-9999px", width: 1920, height: 1080, pointerEvents: "none", fontFamily: "'Segoe UI', Arial, sans-serif", zIndex: 1 }}>
         <ExportLayout lessons={lessons} students={students} marks={marks} batchName={batchName} maxMissed={maxMissed} maxExcused={maxExcused} noteText={noteText} />
       </div>
 
