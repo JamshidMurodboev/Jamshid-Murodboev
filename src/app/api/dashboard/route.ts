@@ -2,35 +2,43 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     await requireSession();
-    const { searchParams } = new URL(req.url);
-    const batchId = searchParams.get("batchId");
 
-    const studentFilter = {
-      archived: false,
-      ...(batchId && batchId !== "all" ? { batchId } : {}),
-    };
-
-    const [students, payments, batches] = await Promise.all([
+    const [batches, students, payments] = await Promise.all([
+      db.batch.findMany({ orderBy: { startDate: "desc" } }),
       db.student.findMany({
-        where: studentFilter,
-        include: {
-          package: true,
-          payments: true,
-        },
+        where: { archived: false },
+        select: { id: true, batchId: true, package: true, finalResult: true },
       }),
       db.payment.findMany({
-        where: {
-          student: studentFilter,
-        },
+        where: { student: { archived: false } },
+        select: { studentId: true, amountDue: true, amountPaid: true, status: true,
+          student: { select: { batchId: true } } },
       }),
-      db.batch.findMany({ orderBy: { startDate: "desc" } }),
     ]);
 
-    const totalExpected = payments.reduce((sum, p) => sum + p.amountDue, 0);
-    const totalCollected = payments.reduce((sum, p) => sum + p.amountPaid, 0);
+    // Per-batch revenue
+    const batchRevenue = batches.map((b) => {
+      const batchPayments = payments.filter((p) => p.student.batchId === b.id);
+      const due = batchPayments.reduce((s, p) => s + p.amountDue, 0);
+      const collected = batchPayments.reduce((s, p) => s + p.amountPaid, 0);
+      const studentCount = students.filter((s) => s.batchId === b.id).length;
+      return {
+        id: b.id,
+        name: b.name,
+        status: b.status,
+        studentCount,
+        due,
+        collected,
+        outstanding: due - collected,
+        rate: due > 0 ? Math.round((collected / due) * 100) : null,
+      };
+    });
+
+    const totalDue = payments.reduce((s, p) => s + p.amountDue, 0);
+    const totalCollected = payments.reduce((s, p) => s + p.amountPaid, 0);
 
     const paymentStatusBreakdown = {
       paid: payments.filter((p) => p.status === "PAID").length,
@@ -55,15 +63,15 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       totalStudents: students.length,
-      totalExpected,
+      totalDue,
       totalCollected,
-      outstanding: totalExpected - totalCollected,
+      outstanding: totalDue - totalCollected,
       paymentStatusBreakdown,
       winRate,
       studentsWithResult: studentsWithResult.length,
       won,
       packageBreakdown,
-      batches,
+      batchRevenue,
     });
   } catch (err) {
     console.error(err);

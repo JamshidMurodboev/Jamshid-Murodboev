@@ -69,6 +69,7 @@ export function StudentsClient() {
   const [view, setView] = useState<"table" | "kanban">("table");
   const [formBatchId, setFormBatchId] = useState("");
   const [priceCurrency, setPriceCurrency] = useState("UZS");
+  const [paidInFull, setPaidInFull] = useState(false);
 
   // Bulk action state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -110,6 +111,7 @@ export function StudentsClient() {
     if (open) {
       setFormBatchId(selectedBatch !== "all" ? selectedBatch : "");
       setPriceCurrency("UZS");
+      setPaidInFull(false);
     }
   }, [open, selectedBatch]);
 
@@ -147,6 +149,9 @@ export function StudentsClient() {
           progressStageId: fd.get("progressStageId") || null,
           notes: fd.get("notes") || null,
           scholarshipIds,
+          paidInFull,
+          paymentDate: paidInFull ? (fd.get("paymentDate") || null) : null,
+          paymentNotes: paidInFull ? (fd.get("paymentNotes") || null) : null,
         }),
       });
       if (!res.ok) throw new Error("Failed");
@@ -580,6 +585,30 @@ export function StudentsClient() {
                   </label>
                 ))}
               </div>
+            </div>
+            {/* Upfront payment */}
+            <div className="rounded-md border p-4 space-y-3 bg-muted/30">
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="rounded h-4 w-4"
+                  checked={paidInFull}
+                  onChange={(e) => setPaidInFull(e.target.checked)}
+                />
+                <span className="text-sm font-medium">Paid in full (upfront payment before enrolling)</span>
+              </label>
+              {paidInFull && (
+                <div className="grid grid-cols-2 gap-4 pt-1">
+                  <div className="space-y-2">
+                    <Label htmlFor="paymentDate">Payment Date *</Label>
+                    <Input id="paymentDate" name="paymentDate" type="date" required={paidInFull} defaultValue={new Date().toISOString().slice(0, 10)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="paymentNotes">Payment Notes</Label>
+                    <Input id="paymentNotes" name="paymentNotes" placeholder="Receipt #, bank, etc." />
+                  </div>
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="notes">Notes</Label>
