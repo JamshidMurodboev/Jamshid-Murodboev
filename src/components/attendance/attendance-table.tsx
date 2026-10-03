@@ -195,12 +195,12 @@ function ExportLayout({
   }
 
   return (
-    <div style={{ width: 1920, height: 1080, background: "#faf7f2", color: "#1a1a1a", fontFamily: "'Segoe UI', Arial, sans-serif", display: "flex", flexDirection: "column", padding: "40px 48px 32px", boxSizing: "border-box" }}>
+    <div style={{ width: 1920, background: "#faf7f2", color: "#1a1a1a", fontFamily: "'Segoe UI', Arial, sans-serif", padding: "40px 48px 32px", boxSizing: "border-box" }}>
       <div style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 22, fontWeight: 700, color: "#1a1a1a" }}>{UZ.attendance.title}</div>
         <div style={{ fontSize: 14, color: "#555", marginTop: 4 }}>{batchName}</div>
       </div>
-      <div style={{ flex: 1, overflow: "hidden" }}>
+      <div>
         <table style={{ borderCollapse: "collapse", width: "100%", background: "#fff", borderRadius: 8, boxShadow: "0 2px 16px rgba(0,0,0,0.10)", fontSize: 13 }}>
           <thead>
             <tr>
@@ -244,7 +244,7 @@ function ExportLayout({
           </tbody>
         </table>
       </div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14 }}>
         <div style={{ display: "flex", gap: 20, fontSize: 12, color: "#444" }}>
           {(["done", "missed", "excused"] as const).map((v) => (
             <span key={v} style={{ display: "flex", alignItems: "center", gap: 5 }}>
