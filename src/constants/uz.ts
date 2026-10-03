@@ -48,5 +48,10 @@ export const UZ = {
     warningColStudent: "Student",
     warningColType: "Type",
     warningColLessons: "Lessons",
+
+    confirmTitle: "Belgilanishni tasdiqlang",
+    confirmMessage: (name: string, action: string) =>
+      `${name}: ${action}`,
+    confirm: "Tasdiqlash",
   },
 } as const;

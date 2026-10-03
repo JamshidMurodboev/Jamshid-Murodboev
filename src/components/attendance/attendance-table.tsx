@@ -124,10 +124,10 @@ function WarningList({
     const ec = excusedLessons.length;
     const expelMissed = mc >= maxMissed;
     const expelExcused = ec >= maxExcused;
-    if (expelMissed || mc === maxMissed - 1) {
+    if (mc > 0) {
       entries.push({ student: s, type: "missed", lessonTitles: missedLessons, isExpel: expelMissed });
     }
-    if (expelExcused || ec === maxExcused - 1) {
+    if (ec > 0) {
       entries.push({ student: s, type: "excused", lessonTitles: excusedLessons, isExpel: expelExcused });
     }
   }
@@ -299,6 +299,11 @@ export function AttendanceTable({
   const [exporting, setExporting] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
 
+  const [confirmMark, setConfirmMark] = useState<{
+    lessonId: string; studentId: string; field: MarkField;
+    newValue: MarkValue; studentName: string; lessonName: string;
+  } | null>(null);
+
   const [, startTransition] = useTransition();
 
   // ── Load data ──────────────────────────────────────────────────────────────
@@ -394,8 +399,23 @@ export function AttendanceTable({
   function cycleMark(lessonId: string, studentId: string, field: MarkField) {
     if (!isAdmin) return;
     const key = markKey(lessonId, studentId);
+    const newValue = cycle(marks.get(key)?.[field] ?? null);
+    const student = students.find((s) => s.id === studentId);
+    const lesson = lessons.find((l) => l.id === lessonId);
+    const valueLabel = newValue === "done" ? UZ.attendance.markDone : newValue === "missed" ? UZ.attendance.markMissed : newValue === "excused" ? UZ.attendance.markExcused : UZ.attendance.markEmpty;
+    setConfirmMark({
+      lessonId, studentId, field, newValue,
+      studentName: student?.fullName ?? "",
+      lessonName: `${lessonTitle(lesson ?? { id: "", number: 0, title: null, order: 0 })} (${field === "attendance" ? UZ.attendance.colAttendance : UZ.attendance.colAssignment}) → ${valueLabel}`,
+    });
+  }
+
+  function applyMark() {
+    if (!confirmMark) return;
+    const { lessonId, studentId, field, newValue } = confirmMark;
+    setConfirmMark(null);
+    const key = markKey(lessonId, studentId);
     const current = marks.get(key);
-    const newValue = cycle(current?.[field] ?? null);
 
     startTransition(() => {
       setMarks((prev) => {
@@ -420,8 +440,8 @@ export function AttendanceTable({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         lessonId, studentId,
-        attendance: field === "attendance" ? newValue : (marks.get(key)?.attendance ?? null),
-        assignment: field === "assignment" ? newValue : (marks.get(key)?.assignment ?? null),
+        attendance: field === "attendance" ? newValue : (current?.attendance ?? null),
+        assignment: field === "assignment" ? newValue : (current?.assignment ?? null),
       }),
     })
       .then((r) => r.json())
@@ -684,6 +704,22 @@ export function AttendanceTable({
           <ExportLayout lessons={lessons} students={students} marks={marks} batchName={batchName} maxMissed={maxMissed} maxExcused={maxExcused} noteText={noteText} />
         </div>
       </div>
+
+      {/* Confirm mark dialog */}
+      <AlertDialog open={!!confirmMark} onOpenChange={(o) => !o && setConfirmMark(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{UZ.attendance.confirmTitle}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmMark && UZ.attendance.confirmMessage(confirmMark.studentName, confirmMark.lessonName)}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{UZ.attendance.cancel}</AlertDialogCancel>
+            <AlertDialogAction onClick={applyMark}>{UZ.attendance.confirm}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Edit lesson dialog */}
       <Dialog open={!!editLesson} onOpenChange={(o) => !o && setEditLesson(null)}>
