@@ -60,11 +60,15 @@ model Batch {
   endDate      DateTime?
   status       BatchStatus      @default(ACTIVE)
   notes        String?
+  maxMissed    Int              @default(3)
+  maxExcused   Int              @default(4)
+  noteText     String?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   scholarships BatchScholarship[]
   packages     Package[]
   students     Student[]
+  lessons      Lesson[]
 }
 
 enum BatchStatus {
@@ -132,6 +136,7 @@ model Student {
   updatedAt           DateTime             @updatedAt
   scholarships        StudentScholarship[]
   payments            Payment[]
+  marks               Mark[]
 }
 
 enum Degree {
@@ -180,4 +185,39 @@ model AppSetting {
   key       String @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+enum MarkValue {
+  done
+  missed
+  excused
+}
+
+model Lesson {
+  id        String   @id @default(cuid())
+  batchId   String
+  batch     Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  number    Int
+  title     String?
+  order     Int
+  createdAt DateTime @default(now())
+  marks     Mark[]
+
+  @@index([batchId])
+}
+
+model Mark {
+  id         String     @id @default(cuid())
+  lessonId   String
+  lesson     Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  studentId  String
+  student    Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  attendance MarkValue?
+  assignment MarkValue?
+  updatedAt  DateTime   @updatedAt
+  updatedBy  String?
+
+  @@unique([lessonId, studentId])
+  @@index([lessonId])
+  @@index([studentId])
 }

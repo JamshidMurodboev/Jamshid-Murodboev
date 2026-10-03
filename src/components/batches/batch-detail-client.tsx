@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -20,6 +21,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, ChevronLeft, Pencil } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
+import { AttendanceTable } from "@/components/attendance/attendance-table";
+import { UZ } from "@/constants/uz";
 
 interface PackageDetail extends Package { description?: string }
 
@@ -33,12 +36,13 @@ interface Student {
 interface Batch {
   id: string; name: string; startDate: string; endDate?: string;
   status: "ACTIVE" | "CLOSED"; notes?: string;
+  maxMissed: number; maxExcused: number; noteText: string | null;
   scholarships: { scholarship: Scholarship }[];
   packages: Package[];
   students: Student[];
 }
 
-export function BatchDetailClient({ batchId }: { batchId: string }) {
+export function BatchDetailClient({ batchId, isAdmin }: { batchId: string; isAdmin?: boolean }) {
   const router = useRouter();
   const { toast } = useToast();
   const [batch, setBatch] = useState<Batch | null>(null);
@@ -221,118 +225,138 @@ export function BatchDetailClient({ batchId }: { batchId: string }) {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Packages / Tiers</CardTitle>
-          <Button size="sm" onClick={() => setPkgOpen(true)}>
-            <Plus className="mr-1 h-3.5 w-3.5" /> Add
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {batch.packages.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No packages yet.</p>
-          ) : (
-            <div className="flex flex-wrap gap-3">
-              {batch.packages.map((p) => (
-                <div key={p.id} className="rounded-md border p-3 text-sm relative group">
-                  <div className="absolute top-1.5 right-1.5 hidden group-hover:flex gap-1">
-                    <button
-                      type="button"
-                      className="rounded p-1 hover:bg-muted"
-                      onClick={() => { setEditingPkg(p); setPkgEditOpen(true); }}
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <button type="button" className="rounded p-1 hover:bg-destructive/10 text-destructive">
-                          <Trash2 className="h-3 w-3" />
+      <Tabs defaultValue="overview">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="attendance">{UZ.attendance.tab}</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6 pt-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-base">Packages / Tiers</CardTitle>
+              <Button size="sm" onClick={() => setPkgOpen(true)}>
+                <Plus className="mr-1 h-3.5 w-3.5" /> Add
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {batch.packages.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No packages yet.</p>
+              ) : (
+                <div className="flex flex-wrap gap-3">
+                  {batch.packages.map((p) => (
+                    <div key={p.id} className="rounded-md border p-3 text-sm relative group">
+                      <div className="absolute top-1.5 right-1.5 hidden group-hover:flex gap-1">
+                        <button
+                          type="button"
+                          className="rounded p-1 hover:bg-muted"
+                          onClick={() => { setEditingPkg(p); setPkgEditOpen(true); }}
+                        >
+                          <Pencil className="h-3 w-3" />
                         </button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Package</AlertDialogTitle>
-                          <AlertDialogDescription>Delete &quot;{p.name}&quot;? Students assigned to this package will be unlinked.</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDeletePackage(p.id)} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                  <p className="font-medium pr-12">{p.name}</p>
-                  <p className="text-muted-foreground">{formatCurrency(p.listPrice)}</p>
-                  {p.earlyBirdPrice && (
-                    <p className="text-xs text-green-600">EB: {formatCurrency(p.earlyBirdPrice)}</p>
-                  )}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button type="button" className="rounded p-1 hover:bg-destructive/10 text-destructive">
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Package</AlertDialogTitle>
+                              <AlertDialogDescription>Delete &quot;{p.name}&quot;? Students assigned to this package will be unlinked.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeletePackage(p.id)} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                      <p className="font-medium pr-12">{p.name}</p>
+                      <p className="text-muted-foreground">{formatCurrency(p.listPrice)}</p>
+                      {p.earlyBirdPrice && (
+                        <p className="text-xs text-green-600">EB: {formatCurrency(p.earlyBirdPrice)}</p>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              )}
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Students ({batch.students.length})</CardTitle>
-          <Link href={`/students?batchId=${batchId}`}>
-            <Button size="sm" variant="outline">View All</Button>
-          </Link>
-        </CardHeader>
-        <CardContent>
-          {batch.students.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No students in this batch.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Package</TableHead>
-                  <TableHead>Stage</TableHead>
-                  <TableHead>Balance</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {batch.students.map((s) => {
-                  const balance = s.payments.reduce((sum, p) => sum + (p.amountDue - p.amountPaid), 0);
-                  return (
-                    <TableRow key={s.id} className="cursor-pointer" onClick={() => router.push(`/students/${s.id}`)}>
-                      <TableCell className="font-medium">{s.fullName}</TableCell>
-                      <TableCell>{s.package?.name ?? "—"}</TableCell>
-                      <TableCell>{s.progressStage?.name ?? "—"}</TableCell>
-                      <TableCell className={balance > 0 ? "text-destructive font-medium" : "text-green-600"}>
-                        {balance > 0 ? formatCurrency(balance) : "Paid"}
-                      </TableCell>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-base">Students ({batch.students.length})</CardTitle>
+              <Link href={`/students?batchId=${batchId}`}>
+                <Button size="sm" variant="outline">View All</Button>
+              </Link>
+            </CardHeader>
+            <CardContent>
+              {batch.students.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No students in this batch.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Package</TableHead>
+                      <TableHead>Stage</TableHead>
+                      <TableHead>Balance</TableHead>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {batch.students.map((s) => {
+                      const balance = s.payments.reduce((sum, p) => sum + (p.amountDue - p.amountPaid), 0);
+                      return (
+                        <TableRow key={s.id} className="cursor-pointer" onClick={() => router.push(`/students/${s.id}`)}>
+                          <TableCell className="font-medium">{s.fullName}</TableCell>
+                          <TableCell>{s.package?.name ?? "—"}</TableCell>
+                          <TableCell>{s.progressStage?.name ?? "—"}</TableCell>
+                          <TableCell className={balance > 0 ? "text-destructive font-medium" : "text-green-600"}>
+                            {balance > 0 ? formatCurrency(balance) : "Paid"}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
 
-      <div className="flex gap-2">
-        {batch.status === "ACTIVE" && (
-          <Button variant="outline" onClick={closeBatch}>Close Batch</Button>
-        )}
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="destructive" size="sm"><Trash2 className="mr-1 h-4 w-4" />Delete Batch</Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Batch</AlertDialogTitle>
-              <AlertDialogDescription>This will permanently delete the batch and all associated packages. Students will be unlinked. This cannot be undone.</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={deleteBatch} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
+          <div className="flex gap-2">
+            {batch.status === "ACTIVE" && (
+              <Button variant="outline" onClick={closeBatch}>Close Batch</Button>
+            )}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm"><Trash2 className="mr-1 h-4 w-4" />Delete Batch</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Batch</AlertDialogTitle>
+                  <AlertDialogDescription>This will permanently delete the batch and all associated packages. Students will be unlinked. This cannot be undone.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={deleteBatch} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="attendance" className="pt-4">
+          <AttendanceTable
+            batchId={batchId}
+            batchName={batch.name}
+            isAdmin={isAdmin ?? false}
+            maxMissed={batch.maxMissed}
+            maxExcused={batch.maxExcused}
+            noteText={batch.noteText}
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Edit Batch Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>

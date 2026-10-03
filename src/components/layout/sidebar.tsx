@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, BookOpen, CreditCard, Settings, GraduationCap,
-  LogOut, X, BarChart3,
+  LogOut, X, BarChart3, ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ const navItems = [
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/batches", label: "Batches", icon: BookOpen },
   { href: "/students", label: "Students", icon: Users },
+  { href: "/attendance", label: "Davomat", icon: ClipboardList },
   { href: "/payments", label: "Payments", icon: CreditCard },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
