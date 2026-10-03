@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Download, Check, X, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Trash2, Download, AlertTriangle } from "lucide-react";
 import { UZ } from "@/constants/uz";
 import {
   exportCsv, exportExcel, exportPng, exportPdf,
@@ -29,7 +29,12 @@ import {
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Lesson { id: string; number: number; title: string | null; order: number }
-interface Student { id: string; fullName: string }
+interface Student {
+  id: string;
+  fullName: string;
+  degree?: string | null;
+  packageName?: string | null;
+}
 interface MarkRecord {
   id?: string;
   lessonId: string;
@@ -39,6 +44,12 @@ interface MarkRecord {
 }
 
 type MarkField = "attendance" | "assignment";
+
+const DEGREE_ORDER: Record<string, number> = { BACHELOR: 0, MASTER: 1, PHD: 2, EXCHANGE: 3 };
+
+function degreeOrder(d?: string | null) {
+  return DEGREE_ORDER[d ?? ""] ?? 4;
+}
 
 function cycle(v: MarkValue): MarkValue {
   if (v === null) return "done";
@@ -54,49 +65,29 @@ function markKey(lessonId: string, studentId: string) {
 // ─── Cell component ───────────────────────────────────────────────────────────
 
 function MarkCell({
-  value,
-  isAdmin,
-  pending,
-  onClick,
-  onKeyDown,
-  tabIndex,
-  dataCell,
+  value, isAdmin, pending, onClick, onKeyDown, tabIndex, dataCell,
 }: {
-  value: MarkValue;
-  isAdmin: boolean;
-  pending: boolean;
-  onClick: () => void;
-  onKeyDown: (e: React.KeyboardEvent) => void;
-  tabIndex: number;
-  dataCell: string;
+  value: MarkValue; isAdmin: boolean; pending: boolean;
+  onClick: () => void; onKeyDown: (e: React.KeyboardEvent) => void;
+  tabIndex: number; dataCell: string;
 }) {
   const icon = value ? ICON[value] : null;
   const color = value ? ICON_COLOR[value] : null;
-
-  const base =
-    "inline-flex h-7 w-7 items-center justify-center rounded-md text-sm font-bold select-none transition-all";
+  const base = "inline-flex h-7 w-7 items-center justify-center rounded-md text-sm font-bold select-none transition-all";
   const interactive = isAdmin
     ? "cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-primary/40 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary"
     : "cursor-default";
-  const opacityClass = pending ? "opacity-50" : "";
-
   return (
     <td className="border border-border/40 text-center px-1 py-1" style={{ minWidth: 40 }}>
       <button
         type="button"
-        className={`${base} ${interactive} ${opacityClass}`}
-        style={
-          icon
-            ? { background: `${color}20`, color: color!, border: `1.5px solid ${color}50` }
-            : { border: "1.5px solid transparent" }
-        }
+        className={`${base} ${interactive} ${pending ? "opacity-50" : ""}`}
+        style={icon ? { background: `${color}20`, color: color!, border: `1.5px solid ${color}50` } : { border: "1.5px solid transparent" }}
         onClick={isAdmin ? onClick : undefined}
         onKeyDown={isAdmin ? onKeyDown : undefined}
         tabIndex={isAdmin ? tabIndex : -1}
         data-cell={dataCell}
-        aria-label={
-          value ? UZ.attendance[`mark${value.charAt(0).toUpperCase()}${value.slice(1)}` as "markDone"] : UZ.attendance.markEmpty
-        }
+        aria-label={value ? UZ.attendance[`mark${value.charAt(0).toUpperCase()}${value.slice(1)}` as "markDone"] : UZ.attendance.markEmpty}
       >
         {icon ?? <span className="text-muted-foreground/30 text-xs">·</span>}
       </button>
@@ -104,24 +95,97 @@ function MarkCell({
   );
 }
 
+// ─── Warning list ─────────────────────────────────────────────────────────────
+
+function WarningList({
+  students, lessons, marks, maxMissed, maxExcused,
+}: {
+  students: Student[]; lessons: Lesson[];
+  marks: Map<string, MarkRecord>;
+  maxMissed: number; maxExcused: number;
+}) {
+  interface Entry {
+    student: Student;
+    type: "missed" | "excused";
+    lessonTitles: string[];
+    isExpel: boolean;
+  }
+
+  const entries: Entry[] = [];
+  for (const s of students) {
+    const missedLessons: string[] = [];
+    const excusedLessons: string[] = [];
+    for (const l of lessons) {
+      const m = marks.get(markKey(l.id, s.id));
+      if (m?.attendance === "missed" || m?.assignment === "missed") missedLessons.push(lessonTitle(l));
+      if (m?.attendance === "excused" || m?.assignment === "excused") excusedLessons.push(lessonTitle(l));
+    }
+    const mc = missedLessons.length;
+    const ec = excusedLessons.length;
+    const expelMissed = mc >= maxMissed;
+    const expelExcused = ec >= maxExcused;
+    if (expelMissed || mc === maxMissed - 1) {
+      entries.push({ student: s, type: "missed", lessonTitles: missedLessons, isExpel: expelMissed });
+    }
+    if (expelExcused || ec === maxExcused - 1) {
+      entries.push({ student: s, type: "excused", lessonTitles: excusedLessons, isExpel: expelExcused });
+    }
+  }
+
+  if (entries.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      <h3 className="text-sm font-semibold">{UZ.attendance.warningSectionTitle}</h3>
+      <div className="rounded-md border overflow-hidden">
+        <table className="text-sm w-full">
+          <thead>
+            <tr className="bg-amber-50 dark:bg-amber-950/20 border-b text-left">
+              <th className="px-3 py-2 font-medium w-6">#</th>
+              <th className="px-3 py-2 font-medium">{UZ.attendance.warningColStudent}</th>
+              <th className="px-3 py-2 font-medium">{UZ.attendance.warningColType}</th>
+              <th className="px-3 py-2 font-medium">{UZ.attendance.warningColLessons}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map((entry, i) => (
+              <tr key={`${entry.student.id}-${entry.type}`} className={i % 2 === 0 ? "bg-background" : "bg-muted/20"}>
+                <td className="px-3 py-2 text-muted-foreground text-xs">{i + 1}</td>
+                <td className="px-3 py-2 font-medium">
+                  {entry.student.fullName}
+                  {entry.isExpel && (
+                    <Badge variant="destructive" className="ml-2 text-xs px-1.5 py-0">
+                      {UZ.attendance.expelBadge}
+                    </Badge>
+                  )}
+                </td>
+                <td className="px-3 py-2">
+                  {entry.type === "missed" ? (
+                    <span className="font-bold text-[#d64545]">✕</span>
+                  ) : (
+                    <span className="font-bold text-[#e0a526]">!</span>
+                  )}
+                </td>
+                <td className="px-3 py-2 text-muted-foreground">
+                  {entry.lessonTitles.join(", ")}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 // ─── Export layout ────────────────────────────────────────────────────────────
 
 function ExportLayout({
-  lessons,
-  students,
-  marks,
-  batchName,
-  maxMissed,
-  maxExcused,
-  noteText,
+  lessons, students, marks, batchName, maxMissed, maxExcused, noteText,
 }: {
-  lessons: Lesson[];
-  students: Student[];
-  marks: Map<string, MarkRecord>;
-  batchName: string;
-  maxMissed: number;
-  maxExcused: number;
-  noteText?: string | null;
+  lessons: Lesson[]; students: Student[];
+  marks: Map<string, MarkRecord>; batchName: string;
+  maxMissed: number; maxExcused: number; noteText?: string | null;
 }) {
   const note = noteText ?? UZ.attendance.noteDefault(maxMissed, maxExcused);
   const HEADER_BG = "#4f5d3a";
@@ -138,77 +202,26 @@ function ExportLayout({
   }
 
   return (
-    <div
-      style={{
-        width: 1920, height: 1080, background: "#faf7f2",
-        fontFamily: "'Segoe UI', Arial, sans-serif",
-        display: "flex", flexDirection: "column",
-        padding: "40px 48px 32px", boxSizing: "border-box",
-      }}
-    >
-      {/* Title */}
+    <div style={{ width: 1920, height: 1080, background: "#faf7f2", fontFamily: "'Segoe UI', Arial, sans-serif", display: "flex", flexDirection: "column", padding: "40px 48px 32px", boxSizing: "border-box" }}>
       <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 22, fontWeight: 700, color: "#1a1a1a" }}>
-          {UZ.attendance.title}
-        </div>
+        <div style={{ fontSize: 22, fontWeight: 700, color: "#1a1a1a" }}>{UZ.attendance.title}</div>
         <div style={{ fontSize: 14, color: "#555", marginTop: 4 }}>{batchName}</div>
       </div>
-
-      {/* Table */}
       <div style={{ flex: 1, overflow: "hidden" }}>
-        <table
-          style={{
-            borderCollapse: "collapse", width: "100%",
-            background: "#fff", borderRadius: 8,
-            boxShadow: "0 2px 16px rgba(0,0,0,0.10)",
-            fontSize: 13,
-          }}
-        >
+        <table style={{ borderCollapse: "collapse", width: "100%", background: "#fff", borderRadius: 8, boxShadow: "0 2px 16px rgba(0,0,0,0.10)", fontSize: 13 }}>
           <thead>
-            {/* Lesson header row */}
             <tr>
-              <th
-                rowSpan={2}
-                style={{
-                  background: HEADER_BG, color: HEADER_FG, padding: "8px 10px",
-                  textAlign: "center", border: "1px solid rgba(255,255,255,0.15)", width: 36,
-                }}
-              >№</th>
-              <th
-                rowSpan={2}
-                style={{
-                  background: HEADER_BG, color: HEADER_FG, padding: "8px 12px",
-                  textAlign: "left", border: "1px solid rgba(255,255,255,0.15)", minWidth: 180,
-                }}
-              >Ism Familiya</th>
+              <th rowSpan={2} style={{ background: HEADER_BG, color: HEADER_FG, padding: "8px 10px", textAlign: "center", border: "1px solid rgba(255,255,255,0.15)", width: 36 }}>№</th>
+              <th rowSpan={2} style={{ background: HEADER_BG, color: HEADER_FG, padding: "8px 12px", textAlign: "left", border: "1px solid rgba(255,255,255,0.15)", minWidth: 180 }}>Ism Familiya</th>
               {lessons.map((l) => (
-                <th
-                  key={l.id}
-                  colSpan={2}
-                  style={{
-                    background: HEADER_BG, color: HEADER_FG,
-                    padding: "8px 4px", textAlign: "center",
-                    border: "1px solid rgba(255,255,255,0.15)",
-                  }}
-                >{lessonTitle(l)}</th>
+                <th key={l.id} colSpan={2} style={{ background: HEADER_BG, color: HEADER_FG, padding: "8px 4px", textAlign: "center", border: "1px solid rgba(255,255,255,0.15)" }}>{lessonTitle(l)}</th>
               ))}
             </tr>
-            {/* Sub-header row */}
             <tr>
-              {lessons.map((l) => (
-                [
-                  <th key={`${l.id}-a`} style={{
-                    background: HEADER_BG, color: HEADER_FG, padding: "5px 4px",
-                    textAlign: "center", fontSize: 11,
-                    border: "1px solid rgba(255,255,255,0.15)",
-                  }}>Davomat</th>,
-                  <th key={`${l.id}-v`} style={{
-                    background: HEADER_BG, color: HEADER_FG, padding: "5px 4px",
-                    textAlign: "center", fontSize: 11,
-                    border: "1px solid rgba(255,255,255,0.15)",
-                  }}>Vazifa</th>,
-                ]
-              ))}
+              {lessons.map((l) => ([
+                <th key={`${l.id}-a`} style={{ background: HEADER_BG, color: HEADER_FG, padding: "5px 4px", textAlign: "center", fontSize: 11, border: "1px solid rgba(255,255,255,0.15)" }}>Davomat</th>,
+                <th key={`${l.id}-v`} style={{ background: HEADER_BG, color: HEADER_FG, padding: "5px 4px", textAlign: "center", fontSize: 11, border: "1px solid rgba(255,255,255,0.15)" }}>Vazifa</th>,
+              ]))}
             </tr>
           </thead>
           <tbody>
@@ -227,22 +240,10 @@ function ExportLayout({
                   </td>
                   {lessons.map((l) => {
                     const m = marks.get(markKey(l.id, s.id));
-                    return (
-                      [
-                        <td key={`${l.id}-a`} style={{
-                          textAlign: "center", padding: "4px 2px",
-                          border: "1px solid #e5e5e5",
-                          color: m?.attendance ? ICON_COLOR[m.attendance] : "#ccc",
-                          fontWeight: 700, fontSize: 14,
-                        }}>{m?.attendance ? ICON[m.attendance] : "·"}</td>,
-                        <td key={`${l.id}-v`} style={{
-                          textAlign: "center", padding: "4px 2px",
-                          border: "1px solid #e5e5e5",
-                          color: m?.assignment ? ICON_COLOR[m.assignment] : "#ccc",
-                          fontWeight: 700, fontSize: 14,
-                        }}>{m?.assignment ? ICON[m.assignment] : "·"}</td>,
-                      ]
-                    );
+                    return ([
+                      <td key={`${l.id}-a`} style={{ textAlign: "center", padding: "4px 2px", border: "1px solid #e5e5e5", color: m?.attendance ? ICON_COLOR[m.attendance] : "#ccc", fontWeight: 700, fontSize: 14 }}>{m?.attendance ? ICON[m.attendance] : "·"}</td>,
+                      <td key={`${l.id}-v`} style={{ textAlign: "center", padding: "4px 2px", border: "1px solid #e5e5e5", color: m?.assignment ? ICON_COLOR[m.assignment] : "#ccc", fontWeight: 700, fontSize: 14 }}>{m?.assignment ? ICON[m.assignment] : "·"}</td>,
+                    ]);
                   })}
                 </tr>
               );
@@ -250,28 +251,18 @@ function ExportLayout({
           </tbody>
         </table>
       </div>
-
-      {/* Legend + Note + Footer */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 14 }}>
         <div style={{ display: "flex", gap: 20, fontSize: 12, color: "#444" }}>
           {(["done", "missed", "excused"] as const).map((v) => (
             <span key={v} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <span style={{
-                display: "inline-flex", width: 20, height: 20, alignItems: "center",
-                justifyContent: "center", borderRadius: 4,
-                background: `${ICON_COLOR[v]}20`, color: ICON_COLOR[v],
-                fontWeight: 700, fontSize: 13, border: `1.5px solid ${ICON_COLOR[v]}50`,
-              }}>{ICON[v]}</span>
+              <span style={{ display: "inline-flex", width: 20, height: 20, alignItems: "center", justifyContent: "center", borderRadius: 4, background: `${ICON_COLOR[v]}20`, color: ICON_COLOR[v], fontWeight: 700, fontSize: 13, border: `1.5px solid ${ICON_COLOR[v]}50` }}>{ICON[v]}</span>
               {v === "done" ? UZ.attendance.legendDone : v === "missed" ? UZ.attendance.legendMissed : UZ.attendance.legendExcused}
             </span>
           ))}
         </div>
         <div style={{ fontSize: 12, color: "#888", fontStyle: "italic" }}>Jamshid.bilan</div>
       </div>
-      <div style={{
-        marginTop: 10, background: "#FEF2F2", border: "1.5px solid #d64545",
-        borderRadius: 8, padding: "8px 14px", fontSize: 12, color: "#b91c1c", fontWeight: 500,
-      }}>
+      <div style={{ marginTop: 10, background: "#FEF2F2", border: "1.5px solid #d64545", borderRadius: 8, padding: "8px 14px", fontSize: 12, color: "#b91c1c", fontWeight: 500 }}>
         {note}
       </div>
     </div>
@@ -321,16 +312,24 @@ export function AttendanceTable({
         fetch(`/api/students?batchId=${batchId}`).then((r) => r.json()),
       ]);
       setLessons(Array.isArray(lessonsRes) ? lessonsRes : []);
-      setStudents(
-        Array.isArray(studentsRes)
-          ? studentsRes.map((s: { id: string; fullName: string }) => ({ id: s.id, fullName: s.fullName }))
-          : []
-      );
+
+      if (Array.isArray(studentsRes)) {
+        const filtered = (studentsRes as {
+          id: string; fullName: string;
+          degree?: string | null;
+          package?: { name: string } | null;
+        }[])
+          .filter((s) => !/vip/i.test(s.package?.name ?? ""))
+          .sort((a, b) => degreeOrder(a.degree) - degreeOrder(b.degree))
+          .map((s) => ({ id: s.id, fullName: s.fullName, degree: s.degree, packageName: s.package?.name }));
+        setStudents(filtered);
+      } else {
+        setStudents([]);
+      }
+
       const map = new Map<string, MarkRecord>();
       if (Array.isArray(marksRes)) {
-        for (const m of marksRes) {
-          map.set(markKey(m.lessonId, m.studentId), m);
-        }
+        for (const m of marksRes) map.set(markKey(m.lessonId, m.studentId), m);
       }
       setMarks(map);
     } catch {
@@ -398,7 +397,6 @@ export function AttendanceTable({
     const current = marks.get(key);
     const newValue = cycle(current?.[field] ?? null);
 
-    // Optimistic update
     startTransition(() => {
       setMarks((prev) => {
         const next = new Map(prev);
@@ -428,69 +426,47 @@ export function AttendanceTable({
     })
       .then((r) => r.json())
       .then((saved: MarkRecord) => {
-        setMarks((prev) => {
-          const next = new Map(prev);
-          next.set(key, saved);
-          return next;
-        });
+        setMarks((prev) => { const next = new Map(prev); next.set(key, saved); return next; });
       })
       .catch(() => {
-        // Roll back
         startTransition(() => {
           setMarks((prev) => {
             const next = new Map(prev);
             const existing = next.get(key);
-            if (existing) {
-              next.set(key, { ...existing, [field]: current?.[field] ?? null });
-            }
+            if (existing) next.set(key, { ...existing, [field]: current?.[field] ?? null });
             return next;
           });
         });
         toast({ title: UZ.attendance.saveError, variant: "destructive" });
       })
       .finally(() => {
-        setPendingCells((p) => {
-          const next = new Set(p);
-          next.delete(cellKey);
-          return next;
-        });
+        setPendingCells((p) => { const next = new Set(p); next.delete(cellKey); return next; });
       });
   }
 
   // ── Keyboard navigation ────────────────────────────────────────────────────
 
   function handleCellKeyDown(
-    e: React.KeyboardEvent,
-    lessonId: string, studentId: string, field: MarkField,
+    e: React.KeyboardEvent, lessonId: string, studentId: string, field: MarkField,
     lessonIdx: number, studentIdx: number
   ) {
-    if (e.key === " " || e.key === "Enter") {
-      e.preventDefault();
-      cycleMark(lessonId, studentId, field);
-      return;
-    }
+    if (e.key === " " || e.key === "Enter") { e.preventDefault(); cycleMark(lessonId, studentId, field); return; }
     const totalCols = lessons.length * 2;
     const colIdx = lessonIdx * 2 + (field === "attendance" ? 0 : 1);
-    let nextLesson = lessonIdx;
-    let nextField: MarkField = field;
-    let nextStudent = studentIdx;
-
+    let nextLesson = lessonIdx, nextField: MarkField = field, nextStudent = studentIdx;
     if (e.key === "ArrowRight") {
-      const nextCol = colIdx + 1;
-      if (nextCol < totalCols) { nextLesson = Math.floor(nextCol / 2); nextField = nextCol % 2 === 0 ? "attendance" : "assignment"; }
+      const nc = colIdx + 1;
+      if (nc < totalCols) { nextLesson = Math.floor(nc / 2); nextField = nc % 2 === 0 ? "attendance" : "assignment"; }
     } else if (e.key === "ArrowLeft") {
-      const nextCol = colIdx - 1;
-      if (nextCol >= 0) { nextLesson = Math.floor(nextCol / 2); nextField = nextCol % 2 === 0 ? "attendance" : "assignment"; }
+      const nc = colIdx - 1;
+      if (nc >= 0) { nextLesson = Math.floor(nc / 2); nextField = nc % 2 === 0 ? "attendance" : "assignment"; }
     } else if (e.key === "ArrowDown") {
       nextStudent = Math.min(studentIdx + 1, students.length - 1);
     } else if (e.key === "ArrowUp") {
       nextStudent = Math.max(studentIdx - 1, 0);
     } else return;
-
     e.preventDefault();
-    const target = document.querySelector(
-      `[data-cell="${lessons[nextLesson]?.id}-${students[nextStudent]?.id}-${nextField}"]`
-    ) as HTMLElement | null;
+    const target = document.querySelector(`[data-cell="${lessons[nextLesson]?.id}-${students[nextStudent]?.id}-${nextField}"]`) as HTMLElement | null;
     target?.focus();
   }
 
@@ -536,8 +512,6 @@ export function AttendanceTable({
 
   const note = noteText ?? UZ.attendance.noteDefault(maxMissed, maxExcused);
 
-  // ── Loading / empty ────────────────────────────────────────────────────────
-
   if (loading) return <AttendanceSkeleton />;
 
   return (
@@ -571,7 +545,6 @@ export function AttendanceTable({
         </div>
       </div>
 
-      {/* No lessons state */}
       {lessons.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
           <p className="text-sm text-muted-foreground">{UZ.attendance.noLessons}</p>
@@ -587,70 +560,43 @@ export function AttendanceTable({
           <div className="overflow-auto rounded-lg border">
             <table className="border-collapse text-sm" style={{ minWidth: "100%" }}>
               <thead>
-                {/* Lesson grouped headers */}
                 <tr>
-                  <th
-                    rowSpan={2}
-                    className="sticky left-0 z-20 bg-[#4f5d3a] text-white border border-white/20 text-center px-2 py-2"
-                    style={{ minWidth: 36 }}
-                  >{UZ.attendance.colNum}</th>
-                  <th
-                    rowSpan={2}
-                    className="sticky left-9 z-20 bg-[#4f5d3a] text-white border border-white/20 text-left px-3 py-2"
-                    style={{ minWidth: 160 }}
-                  >{UZ.attendance.colName}</th>
+                  <th rowSpan={2} className="sticky left-0 z-20 bg-[#4f5d3a] text-white border border-white/20 text-center px-2 py-2" style={{ minWidth: 36 }}>
+                    {UZ.attendance.colNum}
+                  </th>
+                  <th rowSpan={2} className="sticky left-9 z-20 bg-[#4f5d3a] text-white border border-white/20 text-left px-3 py-2" style={{ minWidth: 160 }}>
+                    {UZ.attendance.colName}
+                  </th>
                   {lessons.map((l) => (
-                    <th
-                      key={l.id}
-                      colSpan={2}
-                      className="bg-[#4f5d3a] text-white border border-white/20 text-center px-2 py-2 whitespace-nowrap"
-                    >
+                    <th key={l.id} colSpan={2} className="bg-[#4f5d3a] text-white border border-white/20 text-center px-2 py-2 whitespace-nowrap">
                       <div className="flex items-center justify-center gap-1">
                         <span>{lessonTitle(l)}</span>
                         {isAdmin && (
                           <div className="flex gap-0.5 ml-1">
-                            <button
-                              type="button"
-                              className="rounded p-0.5 hover:bg-white/20 transition-colors"
-                              onClick={() => { setEditLesson(l); setEditTitle(l.title ?? ""); }}
-                            ><Pencil className="h-3 w-3" /></button>
-                            <button
-                              type="button"
-                              className="rounded p-0.5 hover:bg-white/20 transition-colors text-red-300"
-                              onClick={() => setDeleteLessonId(l.id)}
-                            ><Trash2 className="h-3 w-3" /></button>
+                            <button type="button" className="rounded p-0.5 hover:bg-white/20 transition-colors" onClick={() => { setEditLesson(l); setEditTitle(l.title ?? ""); }}>
+                              <Pencil className="h-3 w-3" />
+                            </button>
+                            <button type="button" className="rounded p-0.5 hover:bg-white/20 transition-colors text-red-300" onClick={() => setDeleteLessonId(l.id)}>
+                              <Trash2 className="h-3 w-3" />
+                            </button>
                           </div>
                         )}
                       </div>
                     </th>
                   ))}
                 </tr>
-                {/* Sub-headers: Davomat / Vazifa per lesson */}
                 <tr>
-                  {lessons.map((l) => (
-                    [
-                      <th key={`${l.id}-a`} className="bg-[#4f5d3a] text-white border border-white/20 text-center px-1 py-1 text-xs font-normal" style={{ minWidth: 40 }}>
-                        {UZ.attendance.colAttendance}
-                      </th>,
-                      <th key={`${l.id}-v`} className="bg-[#4f5d3a] text-white border border-white/20 text-center px-1 py-1 text-xs font-normal" style={{ minWidth: 40 }}>
-                        {UZ.attendance.colAssignment}
-                      </th>,
-                    ]
-                  ))}
+                  {lessons.map((l) => ([
+                    <th key={`${l.id}-a`} className="bg-[#4f5d3a] text-white border border-white/20 text-center px-1 py-1 text-xs font-normal" style={{ minWidth: 40 }}>{UZ.attendance.colAttendance}</th>,
+                    <th key={`${l.id}-v`} className="bg-[#4f5d3a] text-white border border-white/20 text-center px-1 py-1 text-xs font-normal" style={{ minWidth: 40 }}>{UZ.attendance.colAssignment}</th>,
+                  ]))}
                 </tr>
               </thead>
               <tbody>
                 {students.map((s, si) => {
                   const { expel, warn } = studentStatus(s);
                   return (
-                    <tr
-                      key={s.id}
-                      className={
-                        expel ? "bg-red-50 dark:bg-red-950/20"
-                          : warn ? "bg-amber-50 dark:bg-amber-950/20"
-                          : si % 2 === 0 ? "bg-background" : "bg-muted/30"
-                      }
-                    >
+                    <tr key={s.id} className={expel ? "bg-red-50 dark:bg-red-950/20" : warn ? "bg-amber-50 dark:bg-amber-950/20" : si % 2 === 0 ? "bg-background" : "bg-muted/30"}>
                       <td className="sticky left-0 z-10 border border-border/40 text-center px-2 py-1.5 text-muted-foreground text-xs font-medium bg-inherit">
                         {si + 1}
                       </td>
@@ -671,30 +617,28 @@ export function AttendanceTable({
                       </td>
                       {lessons.map((l, li) => {
                         const m = marks.get(markKey(l.id, s.id));
-                        return (
-                          [
-                            <MarkCell
-                              key={`${l.id}-${s.id}-a`}
-                              value={m?.attendance ?? null}
-                              isAdmin={isAdmin}
-                              pending={pendingCells.has(`${markKey(l.id, s.id)}-attendance`)}
-                              onClick={() => cycleMark(l.id, s.id, "attendance")}
-                              onKeyDown={(e) => handleCellKeyDown(e, l.id, s.id, "attendance", li, si)}
-                              tabIndex={si * lessons.length * 2 + li * 2}
-                              dataCell={`${l.id}-${s.id}-attendance`}
-                            />,
-                            <MarkCell
-                              key={`${l.id}-${s.id}-v`}
-                              value={m?.assignment ?? null}
-                              isAdmin={isAdmin}
-                              pending={pendingCells.has(`${markKey(l.id, s.id)}-assignment`)}
-                              onClick={() => cycleMark(l.id, s.id, "assignment")}
-                              onKeyDown={(e) => handleCellKeyDown(e, l.id, s.id, "assignment", li, si)}
-                              tabIndex={si * lessons.length * 2 + li * 2 + 1}
-                              dataCell={`${l.id}-${s.id}-assignment`}
-                            />,
-                          ]
-                        );
+                        return ([
+                          <MarkCell
+                            key={`${l.id}-${s.id}-a`}
+                            value={m?.attendance ?? null}
+                            isAdmin={isAdmin}
+                            pending={pendingCells.has(`${markKey(l.id, s.id)}-attendance`)}
+                            onClick={() => cycleMark(l.id, s.id, "attendance")}
+                            onKeyDown={(e) => handleCellKeyDown(e, l.id, s.id, "attendance", li, si)}
+                            tabIndex={si * lessons.length * 2 + li * 2}
+                            dataCell={`${l.id}-${s.id}-attendance`}
+                          />,
+                          <MarkCell
+                            key={`${l.id}-${s.id}-v`}
+                            value={m?.assignment ?? null}
+                            isAdmin={isAdmin}
+                            pending={pendingCells.has(`${markKey(l.id, s.id)}-assignment`)}
+                            onClick={() => cycleMark(l.id, s.id, "assignment")}
+                            onKeyDown={(e) => handleCellKeyDown(e, l.id, s.id, "assignment", li, si)}
+                            tabIndex={si * lessons.length * 2 + li * 2 + 1}
+                            dataCell={`${l.id}-${s.id}-assignment`}
+                          />,
+                        ]);
                       })}
                     </tr>
                   );
@@ -707,13 +651,9 @@ export function AttendanceTable({
           <div className="flex flex-wrap gap-4 text-sm">
             {(["done", "missed", "excused"] as const).map((v) => (
               <span key={v} className="flex items-center gap-1.5">
-                <span
-                  className="inline-flex h-6 w-6 items-center justify-center rounded font-bold text-xs"
-                  style={{
-                    background: `${ICON_COLOR[v]}20`, color: ICON_COLOR[v],
-                    border: `1.5px solid ${ICON_COLOR[v]}50`,
-                  }}
-                >{ICON[v]}</span>
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded font-bold text-xs" style={{ background: `${ICON_COLOR[v]}20`, color: ICON_COLOR[v], border: `1.5px solid ${ICON_COLOR[v]}50` }}>
+                  {ICON[v]}
+                </span>
                 <span className="text-muted-foreground">
                   {v === "done" ? UZ.attendance.legendDone : v === "missed" ? UZ.attendance.legendMissed : UZ.attendance.legendExcused}
                 </span>
@@ -726,28 +666,22 @@ export function AttendanceTable({
             <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
             <span>{note}</span>
           </div>
+
+          {/* Warning list */}
+          <WarningList
+            students={students}
+            lessons={lessons}
+            marks={marks}
+            maxMissed={maxMissed}
+            maxExcused={maxExcused}
+          />
         </>
       )}
 
-      {/* Off-screen export layout for PNG/PDF */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: "fixed", top: 0, left: "-9999px",
-          width: 1920, height: 1080, pointerEvents: "none",
-          fontFamily: "'Segoe UI', Arial, sans-serif",
-        }}
-      >
+      {/* Off-screen export layout */}
+      <div aria-hidden="true" style={{ position: "fixed", top: 0, left: "-9999px", width: 1920, height: 1080, pointerEvents: "none", fontFamily: "'Segoe UI', Arial, sans-serif" }}>
         <div ref={exportRef}>
-          <ExportLayout
-            lessons={lessons}
-            students={students}
-            marks={marks}
-            batchName={batchName}
-            maxMissed={maxMissed}
-            maxExcused={maxExcused}
-            noteText={noteText}
-          />
+          <ExportLayout lessons={lessons} students={students} marks={marks} batchName={batchName} maxMissed={maxMissed} maxExcused={maxExcused} noteText={noteText} />
         </div>
       </div>
 
@@ -757,12 +691,7 @@ export function AttendanceTable({
           <DialogHeader><DialogTitle>{UZ.attendance.editLesson}</DialogTitle></DialogHeader>
           <div className="space-y-2 py-2">
             <Label htmlFor="lesson-title">{UZ.attendance.lessonTitle}</Label>
-            <Input
-              id="lesson-title"
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              placeholder={editLesson ? UZ.attendance.lessonDefault(editLesson.number) : ""}
-            />
+            <Input id="lesson-title" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder={editLesson ? UZ.attendance.lessonDefault(editLesson.number) : ""} />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditLesson(null)}>{UZ.attendance.cancel}</Button>
@@ -776,16 +705,13 @@ export function AttendanceTable({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{UZ.attendance.deleteConfirm}</AlertDialogTitle>
-            <AlertDialogDescription>
-              Bu darsga tegishli barcha belgilar o&apos;chiriladi. Bu amalni bekor qilib bo&apos;lmaydi.
-            </AlertDialogDescription>
+            <AlertDialogDescription>Bu darsga tegishli barcha belgilar o&apos;chiriladi. Bu amalni bekor qilib bo&apos;lmaydi.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{UZ.attendance.cancel}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteLessonId && deleteLesson(deleteLessonId)}
-              className="bg-destructive text-destructive-foreground"
-            >{UZ.attendance.delete}</AlertDialogAction>
+            <AlertDialogAction onClick={() => deleteLessonId && deleteLesson(deleteLessonId)} className="bg-destructive text-destructive-foreground">
+              {UZ.attendance.delete}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

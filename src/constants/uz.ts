@@ -1,8 +1,8 @@
 export const UZ = {
   attendance: {
-    title: "Davomat va vazifalar jadvali",
-    tab: "Davomat",
-    navLabel: "Davomat",
+    title: "Tasks/Attendance",
+    tab: "Tasks/Attendance",
+    navLabel: "Attendance",
     addLesson: "+ Dars qo'shish",
     noLessons: "Hali dars qo'shilmagan",
     loadError: "Ma'lumot yuklashda xatolik",
@@ -43,5 +43,10 @@ export const UZ = {
     save: "Saqlash",
     cancel: "Bekor qilish",
     delete: "O'chirish",
+
+    warningSectionTitle: "Warning list",
+    warningColStudent: "Student",
+    warningColType: "Type",
+    warningColLessons: "Lessons",
   },
 } as const;
