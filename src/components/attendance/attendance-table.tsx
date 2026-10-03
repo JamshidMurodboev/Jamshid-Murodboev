@@ -338,6 +338,7 @@ export function AttendanceTable({
   const [editTitle, setEditTitle] = useState("");
 
   const [exporting, setExporting] = useState(false);
+  const [captureMode, setCaptureMode] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
 
   const [markDialog, setMarkDialog] = useState<{
@@ -568,8 +569,23 @@ export function AttendanceTable({
       if (type === "csv") { exportCsv(buildExportData()); return; }
       if (type === "excel") { await exportExcel(buildExportData()); return; }
       if ((type === "png" || type === "pdf") && exportRef.current) {
-        if (type === "png") await exportPng(exportRef.current);
-        else await exportPdf(exportRef.current);
+        const el = exportRef.current;
+        // Move element into the viewport so the browser paints its content.
+        // A full-screen overlay (z-index 99999) hides it from the user;
+        // html-to-image captures the element directly by DOM ref, so the
+        // overlay has no effect on the captured image.
+        el.style.left = "0";
+        el.style.zIndex = "99998";
+        setCaptureMode(true);
+        await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+        try {
+          if (type === "png") await exportPng(el);
+          else await exportPdf(el);
+        } finally {
+          el.style.left = "-9999px";
+          el.style.zIndex = "1";
+          setCaptureMode(false);
+        }
       }
     } catch {
       toast({ title: UZ.attendance.saveError, variant: "destructive" });
@@ -746,7 +762,12 @@ export function AttendanceTable({
         </>
       )}
 
-      {/* Off-screen export layout */}
+      {/* Full-screen overlay: covers the export element while it's in-viewport during capture */}
+      {captureMode && (
+        <div aria-hidden="true" style={{ position: "fixed", inset: 0, background: "#000", zIndex: 99999, pointerEvents: "none" }} />
+      )}
+
+      {/* Export layout — moved on-screen during capture, hidden behind overlay */}
       <div ref={exportRef} aria-hidden="true" style={{ position: "fixed", top: 0, left: "-9999px", width: 1920, height: 1080, pointerEvents: "none", fontFamily: "'Segoe UI', Arial, sans-serif", zIndex: 1 }}>
         <ExportLayout lessons={lessons} students={students} marks={marks} batchName={batchName} maxMissed={maxMissed} maxExcused={maxExcused} noteText={noteText} />
       </div>
