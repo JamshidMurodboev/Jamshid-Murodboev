@@ -51,13 +51,6 @@ function degreeOrder(d?: string | null) {
   return DEGREE_ORDER[d ?? ""] ?? 4;
 }
 
-function cycle(v: MarkValue): MarkValue {
-  if (v === null) return "done";
-  if (v === "done") return "missed";
-  if (v === "missed") return "excused";
-  return null;
-}
-
 function markKey(lessonId: string, studentId: string) {
   return `${lessonId}-${studentId}`;
 }
@@ -265,6 +258,54 @@ function ExportLayout({
       <div style={{ marginTop: 10, background: "#FEF2F2", border: "1.5px solid #d64545", borderRadius: 8, padding: "8px 14px", fontSize: 12, color: "#b91c1c", fontWeight: 500 }}>
         {note}
       </div>
+      <ExportWarningList students={students} lessons={lessons} marks={marks} maxMissed={maxMissed} maxExcused={maxExcused} />
+    </div>
+  );
+}
+
+function ExportWarningList({ students, lessons, marks, maxMissed, maxExcused }: {
+  students: Student[]; lessons: Lesson[];
+  marks: Map<string, MarkRecord>; maxMissed: number; maxExcused: number;
+}) {
+  const entries: { name: string; type: "missed" | "excused"; lessons: string[]; expel: boolean }[] = [];
+  for (const s of students) {
+    const ml: string[] = [], el: string[] = [];
+    for (const l of lessons) {
+      const m = marks.get(markKey(l.id, s.id));
+      if (m?.attendance === "missed" || m?.assignment === "missed") ml.push(lessonTitle(l));
+      if (m?.attendance === "excused" || m?.assignment === "excused") el.push(lessonTitle(l));
+    }
+    if (ml.length > 0) entries.push({ name: s.fullName, type: "missed", lessons: ml, expel: ml.length >= maxMissed });
+    if (el.length > 0) entries.push({ name: s.fullName, type: "excused", lessons: el, expel: el.length >= maxExcused });
+  }
+  if (entries.length === 0) return null;
+  return (
+    <div style={{ marginTop: 12 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, color: "#1a1a1a" }}>{UZ.attendance.warningSectionTitle}</div>
+      <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 12 }}>
+        <thead>
+          <tr style={{ background: "#FFFBEB" }}>
+            <th style={{ border: "1px solid #e5e5e5", padding: "4px 8px", textAlign: "center", width: 28 }}>#</th>
+            <th style={{ border: "1px solid #e5e5e5", padding: "4px 10px", textAlign: "left", minWidth: 160 }}>{UZ.attendance.warningColStudent}</th>
+            <th style={{ border: "1px solid #e5e5e5", padding: "4px 8px", textAlign: "center", width: 40 }}>{UZ.attendance.warningColType}</th>
+            <th style={{ border: "1px solid #e5e5e5", padding: "4px 10px", textAlign: "left" }}>{UZ.attendance.warningColLessons}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {entries.map((e, i) => (
+            <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "#fafafa" }}>
+              <td style={{ border: "1px solid #e5e5e5", padding: "3px 8px", textAlign: "center", color: "#888" }}>{i + 1}</td>
+              <td style={{ border: "1px solid #e5e5e5", padding: "3px 10px", fontWeight: 600 }}>
+                {e.name}{e.expel ? " ⚠" : ""}
+              </td>
+              <td style={{ border: "1px solid #e5e5e5", padding: "3px 8px", textAlign: "center", fontWeight: 700, color: e.type === "missed" ? "#d64545" : "#e0a526" }}>
+                {e.type === "missed" ? "✕" : "!"}
+              </td>
+              <td style={{ border: "1px solid #e5e5e5", padding: "3px 10px", color: "#555" }}>{e.lessons.join(", ")}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -299,9 +340,10 @@ export function AttendanceTable({
   const [exporting, setExporting] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
 
-  const [confirmMark, setConfirmMark] = useState<{
+  const [markDialog, setMarkDialog] = useState<{
     lessonId: string; studentId: string; field: MarkField;
-    newValue: MarkValue; studentName: string; lessonName: string;
+    studentName: string; lessonName: string;
+    selectedValue: MarkValue;
   } | null>(null);
 
   const [, startTransition] = useTransition();
@@ -394,26 +436,26 @@ export function AttendanceTable({
     }
   }
 
-  // ── Cycle mark ─────────────────────────────────────────────────────────────
+  // ── Open mark picker ────────────────────────────────────────────────────────
 
-  function cycleMark(lessonId: string, studentId: string, field: MarkField) {
+  function openMarkPicker(lessonId: string, studentId: string, field: MarkField) {
     if (!isAdmin) return;
     const key = markKey(lessonId, studentId);
-    const newValue = cycle(marks.get(key)?.[field] ?? null);
+    const currentValue = marks.get(key)?.[field] ?? null;
     const student = students.find((s) => s.id === studentId);
     const lesson = lessons.find((l) => l.id === lessonId);
-    const valueLabel = newValue === "done" ? UZ.attendance.markDone : newValue === "missed" ? UZ.attendance.markMissed : newValue === "excused" ? UZ.attendance.markExcused : UZ.attendance.markEmpty;
-    setConfirmMark({
-      lessonId, studentId, field, newValue,
+    setMarkDialog({
+      lessonId, studentId, field,
       studentName: student?.fullName ?? "",
-      lessonName: `${lessonTitle(lesson ?? { id: "", number: 0, title: null, order: 0 })} (${field === "attendance" ? UZ.attendance.colAttendance : UZ.attendance.colAssignment}) → ${valueLabel}`,
+      lessonName: `${lessonTitle(lesson ?? { id: "", number: 0, title: null, order: 0 })} — ${field === "attendance" ? UZ.attendance.colAttendance : UZ.attendance.colAssignment}`,
+      selectedValue: currentValue,
     });
   }
 
   function applyMark() {
-    if (!confirmMark) return;
-    const { lessonId, studentId, field, newValue } = confirmMark;
-    setConfirmMark(null);
+    if (!markDialog) return;
+    const { lessonId, studentId, field, selectedValue: newValue } = markDialog;
+    setMarkDialog(null);
     const key = markKey(lessonId, studentId);
     const current = marks.get(key);
 
@@ -462,6 +504,12 @@ export function AttendanceTable({
       .finally(() => {
         setPendingCells((p) => { const next = new Set(p); next.delete(cellKey); return next; });
       });
+  }
+
+  // ── Cycle (keyboard) — still available for arrow-key nav ───────────────────
+
+  function cycleMark(lessonId: string, studentId: string, field: MarkField) {
+    openMarkPicker(lessonId, studentId, field);
   }
 
   // ── Keyboard navigation ────────────────────────────────────────────────────
@@ -698,28 +746,54 @@ export function AttendanceTable({
         </>
       )}
 
-      {/* Off-screen export layout */}
-      <div aria-hidden="true" style={{ position: "fixed", top: 0, left: "-9999px", width: 1920, height: 1080, pointerEvents: "none", fontFamily: "'Segoe UI', Arial, sans-serif" }}>
-        <div ref={exportRef}>
-          <ExportLayout lessons={lessons} students={students} marks={marks} batchName={batchName} maxMissed={maxMissed} maxExcused={maxExcused} noteText={noteText} />
-        </div>
+      {/* Off-screen export layout — kept just above the viewport so the browser paints text */}
+      <div ref={exportRef} aria-hidden="true" style={{ position: "fixed", top: "-1100px", left: 0, width: 1920, height: 1080, pointerEvents: "none", fontFamily: "'Segoe UI', Arial, sans-serif", zIndex: -1 }}>
+        <ExportLayout lessons={lessons} students={students} marks={marks} batchName={batchName} maxMissed={maxMissed} maxExcused={maxExcused} noteText={noteText} />
       </div>
 
-      {/* Confirm mark dialog */}
-      <AlertDialog open={!!confirmMark} onOpenChange={(o) => !o && setConfirmMark(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{UZ.attendance.confirmTitle}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmMark && UZ.attendance.confirmMessage(confirmMark.studentName, confirmMark.lessonName)}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{UZ.attendance.cancel}</AlertDialogCancel>
-            <AlertDialogAction onClick={applyMark}>{UZ.attendance.confirm}</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Mark picker dialog */}
+      <Dialog open={!!markDialog} onOpenChange={(o) => !o && setMarkDialog(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{UZ.attendance.confirmTitle}</DialogTitle>
+            {markDialog && (
+              <p className="text-sm text-muted-foreground pt-1">
+                <span className="font-medium text-foreground">{markDialog.studentName}</span>
+                {" · "}{markDialog.lessonName}
+              </p>
+            )}
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-2 py-2">
+            {([
+              { value: "done" as MarkValue, label: UZ.attendance.markDone, color: "#3aa655" },
+              { value: "missed" as MarkValue, label: UZ.attendance.markMissed, color: "#d64545" },
+              { value: "excused" as MarkValue, label: UZ.attendance.markExcused, color: "#e0a526" },
+              { value: null as MarkValue, label: UZ.attendance.markEmpty, color: "#888" },
+            ] as { value: MarkValue; label: string; color: string }[]).map(({ value, label, color }) => {
+              const selected = markDialog?.selectedValue === value;
+              return (
+                <button
+                  key={String(value)}
+                  type="button"
+                  onClick={() => setMarkDialog((d) => d ? { ...d, selectedValue: value } : d)}
+                  className="flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-all text-left"
+                  style={selected ? { borderColor: color, background: `${color}15`, color } : { borderColor: "transparent", background: "var(--muted)", color: "var(--muted-foreground)" }}
+                >
+                  <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded font-bold text-xs"
+                    style={value ? { background: `${color}20`, color, border: `1.5px solid ${color}50` } : { background: "var(--muted)", border: "1.5px solid var(--border)" }}>
+                    {value ? ICON[value] : "·"}
+                  </span>
+                  <span className="leading-tight">{label}</span>
+                </button>
+              );
+            })}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMarkDialog(null)}>{UZ.attendance.cancel}</Button>
+            <Button onClick={applyMark}>{UZ.attendance.save}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit lesson dialog */}
       <Dialog open={!!editLesson} onOpenChange={(o) => !o && setEditLesson(null)}>
