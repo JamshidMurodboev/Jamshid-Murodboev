@@ -21,6 +21,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, ChevronLeft, Pencil } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 
+interface PackageDetail extends Package { description?: string }
+
 interface Scholarship { id: string; name: string; shortCode: string }
 interface Package { id: string; name: string; listPrice: number; earlyBirdPrice?: number }
 interface Student {
@@ -44,6 +46,8 @@ export function BatchDetailClient({ batchId }: { batchId: string }) {
   const [loading, setLoading] = useState(true);
   const [pkgOpen, setPkgOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [editingPkg, setEditingPkg] = useState<PackageDetail | null>(null);
+  const [pkgEditOpen, setPkgEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -112,6 +116,51 @@ export function BatchDetailClient({ batchId }: { batchId: string }) {
       toast({ title: "Error", variant: "destructive" });
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleEditPackage(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!editingPkg) return;
+    setSaving(true);
+    const fd = new FormData(e.currentTarget);
+    try {
+      const res = await fetch(`/api/packages/${editingPkg.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: fd.get("name"),
+          listPrice: parseFloat(fd.get("listPrice") as string),
+          earlyBirdPrice: fd.get("earlyBirdPrice") ? parseFloat(fd.get("earlyBirdPrice") as string) : null,
+          description: fd.get("description") || null,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      const updated = await res.json();
+      setBatch((prev) => prev ? {
+        ...prev,
+        packages: prev.packages.map((p) => p.id === editingPkg.id ? { ...p, ...updated } : p),
+      } : prev);
+      setPkgEditOpen(false);
+      toast({ title: "Package updated" });
+    } catch {
+      toast({ title: "Error", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDeletePackage(pkgId: string) {
+    try {
+      const res = await fetch(`/api/packages/${pkgId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed");
+      setBatch((prev) => prev ? {
+        ...prev,
+        packages: prev.packages.filter((p) => p.id !== pkgId),
+      } : prev);
+      toast({ title: "Package deleted" });
+    } catch {
+      toast({ title: "Error", variant: "destructive" });
     }
   }
 
@@ -185,8 +234,34 @@ export function BatchDetailClient({ batchId }: { batchId: string }) {
           ) : (
             <div className="flex flex-wrap gap-3">
               {batch.packages.map((p) => (
-                <div key={p.id} className="rounded-md border p-3 text-sm">
-                  <p className="font-medium">{p.name}</p>
+                <div key={p.id} className="rounded-md border p-3 text-sm relative group">
+                  <div className="absolute top-1.5 right-1.5 hidden group-hover:flex gap-1">
+                    <button
+                      type="button"
+                      className="rounded p-1 hover:bg-muted"
+                      onClick={() => { setEditingPkg(p); setPkgEditOpen(true); }}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button type="button" className="rounded p-1 hover:bg-destructive/10 text-destructive">
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Package</AlertDialogTitle>
+                          <AlertDialogDescription>Delete &quot;{p.name}&quot;? Students assigned to this package will be unlinked.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeletePackage(p.id)} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                  <p className="font-medium pr-12">{p.name}</p>
                   <p className="text-muted-foreground">{formatCurrency(p.listPrice)}</p>
                   {p.earlyBirdPrice && (
                     <p className="text-xs text-green-600">EB: {formatCurrency(p.earlyBirdPrice)}</p>
@@ -313,6 +388,39 @@ export function BatchDetailClient({ batchId }: { batchId: string }) {
               <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save Changes"}</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Package Dialog */}
+      <Dialog open={pkgEditOpen} onOpenChange={setPkgEditOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit Package</DialogTitle></DialogHeader>
+          {editingPkg && (
+            <form onSubmit={handleEditPackage} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="epkg-name">Name</Label>
+                <Input id="epkg-name" name="name" defaultValue={editingPkg.name} required />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="epkg-price">List Price (UZS)</Label>
+                  <Input id="epkg-price" name="listPrice" type="number" min={0} defaultValue={editingPkg.listPrice} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="epkg-eb">Early Bird (UZS)</Label>
+                  <Input id="epkg-eb" name="earlyBirdPrice" type="number" min={0} defaultValue={editingPkg.earlyBirdPrice ?? ""} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="epkg-desc">Description</Label>
+                <Input id="epkg-desc" name="description" defaultValue={editingPkg.description ?? ""} />
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setPkgEditOpen(false)}>Cancel</Button>
+                <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save Changes"}</Button>
+              </DialogFooter>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
 

@@ -2,15 +2,20 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { formatDate, formatCurrency } from "@/lib/utils";
-import { CreditCard, AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { downloadCSV, downloadExcel, openPrintWindow } from "@/lib/export";
+import { CreditCard, AlertCircle, CheckCircle2, Clock, Download, FileSpreadsheet, FileText, Printer } from "lucide-react";
 
 interface Payment {
   id: string; amountDue: number; amountPaid: number;
@@ -43,21 +48,68 @@ export function PaymentsClient() {
   const totalDue = payments.reduce((s, p) => s + p.amountDue, 0);
   const totalPaid = payments.reduce((s, p) => s + p.amountPaid, 0);
 
+  function paymentsToRows() {
+    return payments.map((p) => ({
+      Student: p.student.fullName,
+      Batch: p.student.batch.name,
+      "Due Date": formatDate(p.dueDate),
+      "Amount Due": p.amountDue,
+      Paid: p.amountPaid,
+      Balance: p.amountDue - p.amountPaid,
+      "Paid On": p.paidDate ? formatDate(p.paidDate) : "",
+      Status: p.status,
+      Notes: p.notes ?? "",
+    }));
+  }
+
+  function handleExportCSV() {
+    downloadCSV(paymentsToRows(), "payments");
+  }
+  function handleExportExcel() {
+    downloadExcel(paymentsToRows(), "Payments", "payments");
+  }
+  function handleExportPDF() {
+    const cols = ["Student", "Batch", "Due Date", "Amount Due", "Paid", "Balance", "Paid On", "Status"];
+    const rows = paymentsToRows();
+    const tableHtml = `<table><thead><tr>${cols.map((c) => `<th>${c}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${cols.map((c) => `<td>${(r as Record<string, unknown>)[c] ?? ""}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+    openPrintWindow("Payments", tableHtml);
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="text-2xl font-bold">Payments</h1>
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="PENDING">Pending</SelectItem>
-            <SelectItem value="OVERDUE">Overdue</SelectItem>
-            <SelectItem value="PAID">Paid</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="OVERDUE">Overdue</SelectItem>
+              <SelectItem value="PAID">Paid</SelectItem>
+            </SelectContent>
+          </Select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" disabled={payments.length === 0}>
+                <Download className="mr-1.5 h-4 w-4" /> Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportCSV}>
+                <FileText className="mr-2 h-4 w-4" /> CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportExcel}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportPDF}>
+                <Printer className="mr-2 h-4 w-4" /> Print / PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Summary bar */}

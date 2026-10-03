@@ -1,14 +1,13 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -18,9 +17,16 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Users, LayoutGrid, List } from "lucide-react";
+import {
+  Plus, Search, Users, LayoutGrid, List, Download,
+  FileSpreadsheet, FileText, Printer, X,
+} from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { downloadCSV, downloadExcel, openPrintWindow } from "@/lib/export";
 
 interface Batch { id: string; name: string }
 interface Package { id: string; name: string; listPrice: number }
@@ -29,11 +35,15 @@ interface ProgressStage { id: string; name: string }
 interface DiscountType { id: string; name: string }
 interface Payment { amountDue: number; amountPaid: number; status: string }
 interface Student {
-  id: string; fullName: string; phone?: string; degree?: string;
+  id: string; fullName: string; phone?: string; dob?: string; degree?: string;
+  major?: string; priceCharged?: number; priceCurrency?: string;
+  priceOriginalAmount?: number; notes?: string;
   joiningDate: string;
+  finalResult?: string;
   batch: { id: string; name: string };
   package?: Package;
   progressStage?: ProgressStage;
+  discountType?: DiscountType;
   scholarships: { scholarship: Scholarship }[];
   payments: Payment[];
 }
@@ -60,6 +70,13 @@ export function StudentsClient() {
   const [formBatchId, setFormBatchId] = useState("");
   const [priceCurrency, setPriceCurrency] = useState("UZS");
 
+  // Bulk action state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkAction, setBulkAction] = useState<"stage" | "batch" | "scholarship">("stage");
+  const [bulkValue, setBulkValue] = useState("");
+  const [bulkSaving, setBulkSaving] = useState(false);
+
   const loadStudents = useCallback(async () => {
     const params = new URLSearchParams();
     if (selectedBatch !== "all") params.set("batchId", selectedBatch);
@@ -67,6 +84,7 @@ export function StudentsClient() {
     const res = await fetch(`/api/students?${params}`);
     const data = await res.json();
     setStudents(data);
+    setSelectedIds(new Set());
   }, [selectedBatch, search]);
 
   useEffect(() => {
@@ -142,15 +160,129 @@ export function StudentsClient() {
     }
   }
 
+  async function handleBulkApply() {
+    if (!bulkValue || !selectedIds.size) return;
+    setBulkSaving(true);
+    try {
+      const res = await fetch("/api/students/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentIds: Array.from(selectedIds), action: bulkAction, value: bulkValue }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      const { count } = await res.json();
+      await loadStudents();
+      setBulkOpen(false);
+      setBulkValue("");
+      toast({ title: `Updated ${count} student${count !== 1 ? "s" : ""}` });
+    } catch {
+      toast({ title: "Error", variant: "destructive" });
+    } finally {
+      setBulkSaving(false);
+    }
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === students.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(students.map((s) => s.id)));
+    }
+  }
+
+  // Export helpers
+  function studentsToRows(list: Student[]) {
+    return list.map((s) => ({
+      "Full Name": s.fullName,
+      "Phone": s.phone ?? "",
+      "Date of Birth": s.dob ? s.dob.slice(0, 10) : "",
+      "Batch": s.batch.name,
+      "Package": s.package?.name ?? "",
+      "Degree": s.degree ?? "",
+      "Major": s.major ?? "",
+      "Price (UZS)": s.priceCharged ?? "",
+      "Currency": s.priceCurrency ?? "UZS",
+      "TL Amount": s.priceOriginalAmount ?? "",
+      "Discount": s.discountType?.name ?? "",
+      "Stage": s.progressStage?.name ?? "",
+      "Result": s.finalResult ?? "",
+      "Scholarships": s.scholarships.map(({ scholarship: sc }) => sc.shortCode).join(", "),
+      "Notes": s.notes ?? "",
+    }));
+  }
+
+  function handleExportCSV() {
+    const exportList = selectedIds.size > 0 ? students.filter((s) => selectedIds.has(s.id)) : students;
+    downloadCSV(studentsToRows(exportList), "students");
+  }
+
+  function handleExportExcel() {
+    const exportList = selectedIds.size > 0 ? students.filter((s) => selectedIds.has(s.id)) : students;
+    downloadExcel(studentsToRows(exportList), "Students", "students");
+  }
+
+  function handleExportPDF() {
+    const exportList = selectedIds.size > 0 ? students.filter((s) => selectedIds.has(s.id)) : students;
+    const rows = exportList.map((s) => `
+      <tr>
+        <td>${s.fullName}</td>
+        <td>${s.phone ?? ""}</td>
+        <td>${s.batch.name}</td>
+        <td>${s.package?.name ?? ""}</td>
+        <td>${s.degree ?? ""}</td>
+        <td>${s.progressStage?.name ?? ""}</td>
+        <td>${s.finalResult ?? ""}</td>
+        <td>${s.priceCharged ? s.priceCharged.toLocaleString() : ""} ${s.priceCurrency ?? "UZS"}</td>
+        <td>${s.scholarships.map(({ scholarship: sc }) => sc.shortCode).join(", ")}</td>
+      </tr>`).join("");
+    openPrintWindow("Students Report", `
+      <table>
+        <thead><tr>
+          <th>Name</th><th>Phone</th><th>Batch</th><th>Package</th><th>Degree</th>
+          <th>Stage</th><th>Result</th><th>Price</th><th>Scholarships</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`);
+  }
+
   const balance = (s: Student) => s.payments.reduce((sum, p) => sum + (p.amountDue - p.amountPaid), 0);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Students</h1>
-        <Button onClick={() => setOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Add Student
-        </Button>
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Download className="mr-1.5 h-3.5 w-3.5" />
+                Export {selectedIds.size > 0 ? `(${selectedIds.size})` : ""}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportCSV}>
+                <FileText className="mr-2 h-4 w-4" /> Export CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportExcel}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" /> Export Excel (.xlsx)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportPDF}>
+                <Printer className="mr-2 h-4 w-4" /> Print / Export PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button onClick={() => setOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Add Student
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -205,6 +337,14 @@ export function StudentsClient() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
+                <TableHead className="w-10">
+                  <input
+                    type="checkbox"
+                    className="rounded"
+                    checked={students.length > 0 && selectedIds.size === students.length}
+                    onChange={toggleSelectAll}
+                  />
+                </TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Batch</TableHead>
                 <TableHead>Package</TableHead>
@@ -217,9 +357,17 @@ export function StudentsClient() {
               {students.map((s) => (
                 <TableRow
                   key={s.id}
-                  className="cursor-pointer hover:bg-muted/30 transition-colors"
+                  className={`cursor-pointer hover:bg-muted/30 transition-colors ${selectedIds.has(s.id) ? "bg-primary/5" : ""}`}
                   onClick={() => router.push(`/students/${s.id}`)}
                 >
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      className="rounded"
+                      checked={selectedIds.has(s.id)}
+                      onChange={() => toggleSelect(s.id)}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{s.fullName}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{s.batch.name}</TableCell>
                   <TableCell>{s.package?.name ?? <span className="text-muted-foreground">—</span>}</TableCell>
@@ -251,6 +399,82 @@ export function StudentsClient() {
         </div>
       )}
 
+      {/* Floating bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-4 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
+          <div className="pointer-events-auto flex flex-wrap items-center gap-2 rounded-full border bg-background px-5 py-2.5 shadow-xl">
+            <span className="text-sm font-semibold">{selectedIds.size} selected</span>
+            <div className="h-4 w-px bg-border mx-1" />
+            <Button size="sm" variant="outline" className="rounded-full h-7 text-xs"
+              onClick={() => { setBulkAction("stage"); setBulkValue(""); setBulkOpen(true); }}>
+              Assign Stage
+            </Button>
+            <Button size="sm" variant="outline" className="rounded-full h-7 text-xs"
+              onClick={() => { setBulkAction("batch"); setBulkValue(""); setBulkOpen(true); }}>
+              Move to Batch
+            </Button>
+            <Button size="sm" variant="outline" className="rounded-full h-7 text-xs"
+              onClick={() => { setBulkAction("scholarship"); setBulkValue(""); setBulkOpen(true); }}>
+              Add Scholarship
+            </Button>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="ml-1 rounded-full p-1 hover:bg-muted transition-colors"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk action dialog */}
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {bulkAction === "stage" ? "Assign Progress Stage" :
+               bulkAction === "batch" ? "Move to Batch" : "Add Scholarship"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-muted-foreground">
+              Apply to <strong>{selectedIds.size}</strong> selected student{selectedIds.size !== 1 ? "s" : ""}.
+            </p>
+            {bulkAction === "stage" && (
+              <Select value={bulkValue} onValueChange={setBulkValue}>
+                <SelectTrigger><SelectValue placeholder="Select stage" /></SelectTrigger>
+                <SelectContent>
+                  {stages.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            {bulkAction === "batch" && (
+              <Select value={bulkValue} onValueChange={setBulkValue}>
+                <SelectTrigger><SelectValue placeholder="Select batch" /></SelectTrigger>
+                <SelectContent>
+                  {batches.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            {bulkAction === "scholarship" && (
+              <Select value={bulkValue} onValueChange={setBulkValue}>
+                <SelectTrigger><SelectValue placeholder="Select scholarship" /></SelectTrigger>
+                <SelectContent>
+                  {scholarships.map((s) => <SelectItem key={s.id} value={s.id}>{s.shortCode} — {s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkOpen(false)}>Cancel</Button>
+            <Button disabled={!bulkValue || bulkSaving} onClick={handleBulkApply}>
+              {bulkSaving ? "Applying…" : "Apply"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Student Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Add Student</DialogTitle></DialogHeader>
@@ -453,15 +677,16 @@ function TableSkeleton() {
   return (
     <div className="rounded-md border overflow-hidden">
       <div className="bg-muted/40 p-3">
-        <div className="grid grid-cols-6 gap-4">
-          {["Name", "Batch", "Package", "Scholarships", "Stage", "Balance"].map((h) => (
-            <Skeleton key={h} className="h-4 w-16" />
+        <div className="grid grid-cols-7 gap-4">
+          {["", "Name", "Batch", "Package", "Scholarships", "Stage", "Balance"].map((h, i) => (
+            <Skeleton key={i} className="h-4 w-16" />
           ))}
         </div>
       </div>
       {[...Array(5)].map((_, i) => (
         <div key={i} className="border-t p-4">
-          <div className="grid grid-cols-6 gap-4">
+          <div className="grid grid-cols-7 gap-4">
+            <Skeleton className="h-4 w-4" />
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-4 w-20" />
             <Skeleton className="h-4 w-24" />

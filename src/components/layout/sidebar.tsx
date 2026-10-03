@@ -2,13 +2,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, Users, BookOpen, CreditCard, Settings, GraduationCap, LogOut, X,
+  LayoutDashboard, Users, BookOpen, CreditCard, Settings, GraduationCap,
+  LogOut, X, BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/batches", label: "Batches", icon: BookOpen },
   { href: "/students", label: "Students", icon: Users },
   { href: "/payments", label: "Payments", icon: CreditCard },
