@@ -114,6 +114,8 @@ model Student {
   major               String?
   degree              Degree?
   priceCharged        Float?
+  priceCurrency       String               @default("UZS")
+  priceOriginalAmount Float?
   discountTypeId      String?
   discountType        DiscountType?        @relation(fields: [discountTypeId], references: [id])
   progressStageId     String?

@@ -57,6 +57,8 @@ export function StudentsClient() {
   const [search, setSearch] = useState("");
   const [selectedBatch, setSelectedBatch] = useState(searchParams.get("batchId") ?? "all");
   const [view, setView] = useState<"table" | "kanban">("table");
+  const [formBatchId, setFormBatchId] = useState("");
+  const [priceCurrency, setPriceCurrency] = useState("UZS");
 
   const loadStudents = useCallback(async () => {
     const params = new URLSearchParams();
@@ -87,12 +89,21 @@ export function StudentsClient() {
   }, [loadStudents]);
 
   useEffect(() => {
-    if (open && selectedBatch !== "all") {
-      fetch(`/api/batches/${selectedBatch}`)
-        .then((r) => r.json())
-        .then((b) => setPackages(b.packages ?? []));
+    if (open) {
+      setFormBatchId(selectedBatch !== "all" ? selectedBatch : "");
+      setPriceCurrency("UZS");
     }
   }, [open, selectedBatch]);
+
+  useEffect(() => {
+    if (formBatchId) {
+      fetch(`/api/batches/${formBatchId}`)
+        .then((r) => r.json())
+        .then((b) => setPackages(b.packages ?? []));
+    } else {
+      setPackages([]);
+    }
+  }, [formBatchId]);
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -111,7 +122,9 @@ export function StudentsClient() {
           packageId: fd.get("packageId") || null,
           major: fd.get("major") || null,
           degree: fd.get("degree") || null,
-          priceCharged: fd.get("priceCharged") || null,
+          priceCharged: priceCurrency === "TL" ? (fd.get("priceChargedUZS") || null) : (fd.get("priceCharged") || null),
+          priceCurrency,
+          priceOriginalAmount: priceCurrency === "TL" ? (fd.get("priceCharged") || null) : null,
           discountTypeId: fd.get("discountTypeId") || null,
           progressStageId: fd.get("progressStageId") || null,
           notes: fd.get("notes") || null,
@@ -259,7 +272,7 @@ export function StudentsClient() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Batch *</Label>
-                <Select name="batchId" required defaultValue={selectedBatch !== "all" ? selectedBatch : undefined}>
+                <Select name="batchId" required value={formBatchId} onValueChange={setFormBatchId}>
                   <SelectTrigger><SelectValue placeholder="Select batch" /></SelectTrigger>
                   <SelectContent>
                     {batches.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
@@ -268,10 +281,10 @@ export function StudentsClient() {
               </div>
               <div className="space-y-2">
                 <Label>Package</Label>
-                <Select name="packageId">
-                  <SelectTrigger><SelectValue placeholder="Select package" /></SelectTrigger>
+                <Select name="packageId" disabled={packages.length === 0}>
+                  <SelectTrigger><SelectValue placeholder={packages.length === 0 ? "Select batch first" : "Select package"} /></SelectTrigger>
                   <SelectContent>
-                    {packages.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                    {packages.map((p) => <SelectItem key={p.id} value={p.id}>{p.name} — {p.listPrice.toLocaleString()} UZS</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -291,20 +304,38 @@ export function StudentsClient() {
                 <Input id="major" name="major" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="priceCharged">Price Charged (UZS)</Label>
-                <Input id="priceCharged" name="priceCharged" type="number" min={0} />
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Currency</Label>
+                  <Select value={priceCurrency} onValueChange={setPriceCurrency}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="UZS">UZS (Uzbek Sum)</SelectItem>
+                      <SelectItem value="TL">TL (Turkish Lira)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="priceCharged">{priceCurrency === "TL" ? "Amount in TL" : "Price Charged (UZS)"}</Label>
+                  <Input id="priceCharged" name="priceCharged" type="number" min={0} />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Discount Type</Label>
-                <Select name="discountTypeId">
-                  <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
-                  <SelectContent>
-                    {discounts.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+              {priceCurrency === "TL" && (
+                <div className="space-y-2">
+                  <Label htmlFor="priceChargedUZS">UZS Equivalent (conversion)</Label>
+                  <Input id="priceChargedUZS" name="priceChargedUZS" type="number" min={0} placeholder="Enter the UZS equivalent amount" />
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label>Discount Type</Label>
+              <Select name="discountTypeId">
+                <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectContent>
+                  {discounts.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Progress Stage</Label>

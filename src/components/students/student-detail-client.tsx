@@ -31,7 +31,8 @@ interface Payment {
 }
 interface Student {
   id: string; fullName: string; phone?: string; dob?: string;
-  major?: string; degree?: string; priceCharged?: number; notes?: string;
+  major?: string; degree?: string; priceCharged?: number;
+  priceCurrency?: string; priceOriginalAmount?: number; notes?: string;
   finalResult: string; documentLinks: string[];
   batch: { id: string; name: string };
   package?: { id: string; name: string };
@@ -44,6 +45,8 @@ interface Student {
 }
 interface ProgressStage { id: string; name: string }
 interface Scholarship { id: string; name: string; shortCode: string }
+interface Package { id: string; name: string; listPrice: number }
+interface DiscountType { id: string; name: string }
 
 const STATUS_VARIANT: Record<string, "success" | "warning" | "destructive"> = {
   PAID: "success", PENDING: "warning", OVERDUE: "destructive",
@@ -55,11 +58,14 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
   const [student, setStudent] = useState<Student | null>(null);
   const [stages, setStages] = useState<ProgressStage[]>([]);
   const [scholarships, setScholarships] = useState<Scholarship[]>([]);
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [discounts, setDiscounts] = useState<DiscountType[]>([]);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
+  const [editPriceCurrency, setEditPriceCurrency] = useState("UZS");
 
   async function loadStudent() {
     const res = await fetch(`/api/students/${studentId}`);
@@ -71,9 +77,11 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
       loadStudent(),
       fetch("/api/progress-stages").then((r) => r.json()),
       fetch("/api/scholarships").then((r) => r.json()),
-    ]).then(([, s, sc]) => {
+      fetch("/api/discount-types").then((r) => r.json()),
+    ]).then(([, s, sc, dt]) => {
       setStages(s);
       setScholarships(sc);
+      setDiscounts(dt);
     }).finally(() => setLoading(false));
   }, [studentId]);
 
@@ -103,7 +111,12 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
           dob: fd.get("dob") || null,
           major: fd.get("major") || null,
           degree: fd.get("degree") || null,
-          priceCharged: fd.get("priceCharged") || null,
+          packageId: fd.get("packageId") || null,
+          discountTypeId: fd.get("discountTypeId") || null,
+          progressStageId: fd.get("progressStageId") || null,
+          priceCharged: editPriceCurrency === "TL" ? (fd.get("priceChargedUZS") || null) : (fd.get("priceCharged") || null),
+          priceCurrency: editPriceCurrency,
+          priceOriginalAmount: editPriceCurrency === "TL" ? (fd.get("priceCharged") || null) : null,
           finalResult: fd.get("finalResult"),
           notes: fd.get("notes") || null,
           documentLinks: docLinks,
@@ -188,6 +201,16 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
     router.push("/students");
   }
 
+  function openEditDialog() {
+    if (student) {
+      setEditPriceCurrency(student.priceCurrency ?? "UZS");
+      fetch(`/api/batches/${student.batch.id}`)
+        .then((r) => r.json())
+        .then((b) => setPackages(b.packages ?? []));
+    }
+    setEditOpen(true);
+  }
+
   if (loading) return <StudentDetailSkeleton />;
   if (!student) return <div className="text-muted-foreground">Student not found.</div>;
 
@@ -245,7 +268,7 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+            <Button variant="outline" size="sm" onClick={openEditDialog}>
               <Pencil className="mr-1 h-4 w-4" /> Edit
             </Button>
             <AlertDialog>
@@ -307,7 +330,13 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
               </div>
             </Row>
             <Row label="Discount" value={student.discountType?.name} />
-            <Row label="Price Charged" value={student.priceCharged ? formatCurrency(student.priceCharged) : undefined} />
+            <Row label="Price Charged" value={
+              student.priceCharged
+                ? student.priceCurrency === "TL"
+                  ? `${student.priceOriginalAmount?.toLocaleString()} TL ≈ ${formatCurrency(student.priceCharged)}`
+                  : formatCurrency(student.priceCharged)
+                : undefined
+            } />
             {student.notes && <Row label="Notes" value={student.notes} />}
           </CardContent>
         </Card>
@@ -481,9 +510,60 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-price">Price Charged</Label>
-                <Input id="edit-price" name="priceCharged" type="number" min={0} defaultValue={student.priceCharged ?? ""} />
+                <Label>Package</Label>
+                <Select name="packageId" defaultValue={student.package?.id ?? ""}>
+                  <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                  <SelectContent>
+                    {packages.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
+              <div className="space-y-2">
+                <Label>Discount Type</Label>
+                <Select name="discountTypeId" defaultValue={student.discountType?.id ?? ""}>
+                  <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                  <SelectContent>
+                    {discounts.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Progress Stage</Label>
+              <Select name="progressStageId" defaultValue={student.progressStage?.id ?? ""}>
+                <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectContent>
+                  {stages.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Currency</Label>
+                  <Select value={editPriceCurrency} onValueChange={setEditPriceCurrency}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="UZS">UZS (Uzbek Sum)</SelectItem>
+                      <SelectItem value="TL">TL (Turkish Lira)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-price">{editPriceCurrency === "TL" ? "Amount in TL" : "Price Charged (UZS)"}</Label>
+                  <Input id="edit-price" name="priceCharged" type="number" min={0}
+                    defaultValue={editPriceCurrency === "TL" ? (student.priceOriginalAmount ?? "") : (student.priceCharged ?? "")} />
+                </div>
+              </div>
+              {editPriceCurrency === "TL" && (
+                <div className="space-y-2">
+                  <Label htmlFor="edit-priceUZS">UZS Equivalent</Label>
+                  <Input id="edit-priceUZS" name="priceChargedUZS" type="number" min={0}
+                    defaultValue={student.priceCharged ?? ""} />
+                </div>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Final Result</Label>
                 <Select name="finalResult" defaultValue={student.finalResult}>

@@ -52,6 +52,8 @@ export async function POST(req: Request) {
         major: data.major ?? null,
         degree: data.degree ?? null,
         priceCharged: data.priceCharged ? parseFloat(data.priceCharged) : null,
+        priceCurrency: data.priceCurrency ?? "UZS",
+        priceOriginalAmount: data.priceOriginalAmount ? parseFloat(data.priceOriginalAmount) : null,
         discountTypeId: data.discountTypeId ?? null,
         progressStageId: data.progressStageId ?? null,
         finalResult: data.finalResult ?? "PENDING",

@@ -18,9 +18,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, ChevronLeft } from "lucide-react";
+import { Plus, Trash2, ChevronLeft, Pencil } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 
+interface Scholarship { id: string; name: string; shortCode: string }
 interface Package { id: string; name: string; listPrice: number; earlyBirdPrice?: number }
 interface Student {
   id: string; fullName: string; phone?: string; package?: Package;
@@ -30,7 +31,7 @@ interface Student {
 interface Batch {
   id: string; name: string; startDate: string; endDate?: string;
   status: "ACTIVE" | "CLOSED"; notes?: string;
-  scholarships: { scholarship: { id: string; name: string; shortCode: string } }[];
+  scholarships: { scholarship: Scholarship }[];
   packages: Package[];
   students: Student[];
 }
@@ -39,16 +40,52 @@ export function BatchDetailClient({ batchId }: { batchId: string }) {
   const router = useRouter();
   const { toast } = useToast();
   const [batch, setBatch] = useState<Batch | null>(null);
+  const [allScholarships, setAllScholarships] = useState<Scholarship[]>([]);
   const [loading, setLoading] = useState(true);
   const [pkgOpen, setPkgOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/batches/${batchId}`)
-      .then((r) => r.json())
-      .then(setBatch)
-      .finally(() => setLoading(false));
+    Promise.all([
+      fetch(`/api/batches/${batchId}`).then((r) => r.json()),
+      fetch("/api/scholarships").then((r) => r.json()),
+    ]).then(([b, ss]) => {
+      setBatch(b);
+      setAllScholarships(ss);
+    }).finally(() => setLoading(false));
   }, [batchId]);
+
+  async function handleEdit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!batch) return;
+    setSaving(true);
+    const fd = new FormData(e.currentTarget);
+    const scholarshipIds = Array.from(fd.getAll("scholarshipIds")) as string[];
+    try {
+      const res = await fetch(`/api/batches/${batchId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: fd.get("name"),
+          startDate: fd.get("startDate"),
+          endDate: fd.get("endDate") || null,
+          status: fd.get("status"),
+          notes: fd.get("notes") || null,
+          scholarshipIds,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      const updated = await res.json();
+      setBatch((prev) => prev ? { ...prev, ...updated } : prev);
+      setEditOpen(false);
+      toast({ title: "Batch updated" });
+    } catch {
+      toast({ title: "Error", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function addPackage(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -102,12 +139,17 @@ export function BatchDetailClient({ batchId }: { batchId: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ChevronLeft className="mr-1 h-4 w-4" /> Back
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => router.back()}>
+            <ChevronLeft className="mr-1 h-4 w-4" /> Back
+          </Button>
+          <h1 className="text-2xl font-bold">{batch.name}</h1>
+          <Badge variant={batch.status === "ACTIVE" ? "default" : "secondary"}>{batch.status}</Badge>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+          <Pencil className="mr-1 h-4 w-4" /> Edit Batch
         </Button>
-        <h1 className="text-2xl font-bold">{batch.name}</h1>
-        <Badge variant={batch.status === "ACTIVE" ? "default" : "secondary"}>{batch.status}</Badge>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -216,6 +258,63 @@ export function BatchDetailClient({ batchId }: { batchId: string }) {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+
+      {/* Edit Batch Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Edit Batch</DialogTitle></DialogHeader>
+          <form onSubmit={handleEdit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Name</Label>
+              <Input id="edit-name" name="name" defaultValue={batch.name} required />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-start">Start Date</Label>
+                <Input id="edit-start" name="startDate" type="date" defaultValue={batch.startDate?.slice(0, 10)} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-end">End Date</Label>
+                <Input id="edit-end" name="endDate" type="date" defaultValue={batch.endDate?.slice(0, 10) ?? ""} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <select name="status" defaultValue={batch.status}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm">
+                <option value="ACTIVE">Active</option>
+                <option value="CLOSED">Closed</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Scholarships</Label>
+              <div className="flex flex-wrap gap-2">
+                {allScholarships.map((s) => (
+                  <label key={s.id} className="flex items-center gap-1.5 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="scholarshipIds"
+                      value={s.id}
+                      defaultChecked={batch.scholarships.some((bs) => bs.scholarship.id === s.id)}
+                      className="rounded"
+                    />
+                    {s.shortCode} — {s.name}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-notes">Notes</Label>
+              <textarea id="edit-notes" name="notes" rows={3} defaultValue={batch.notes ?? ""}
+                className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground" />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save Changes"}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={pkgOpen} onOpenChange={setPkgOpen}>
         <DialogContent>
