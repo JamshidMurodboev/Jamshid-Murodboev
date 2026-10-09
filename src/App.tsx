@@ -7,6 +7,7 @@ import DashboardPage from './pages/DashboardPage'
 import GroupPage from './pages/GroupPage'
 import ProfilePage from './pages/ProfilePage'
 import NotesPage from './pages/NotesPage'
+import PortfolioPage from './pages/PortfolioPage'
 
 function ProtectedRoute({ children, requireComplete = true }: { children: React.ReactElement; requireComplete?: boolean }) {
   const { user, userProfile, loading } = useAuth()
@@ -25,7 +26,8 @@ function App() {
     <>
       <Toaster position="top-right" toastOptions={{ className: 'dark:bg-slate-800 dark:text-white' }} />
       <Routes>
-        <Route path="/" element={user && userProfile?.profileComplete ? <Navigate to="/dashboard" replace /> : user && !userProfile?.profileComplete ? <Navigate to="/onboarding" replace /> : <AuthPage />} />
+        <Route path="/" element={<PortfolioPage />} />
+        <Route path="/auth" element={user && userProfile?.profileComplete ? <Navigate to="/dashboard" replace /> : user && !userProfile?.profileComplete ? <Navigate to="/onboarding" replace /> : <AuthPage />} />
         <Route path="/onboarding" element={user ? <OnboardingPage /> : <Navigate to="/" replace />} />
         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
         <Route path="/group/:groupId" element={<ProtectedRoute><GroupPage /></ProtectedRoute>} />
