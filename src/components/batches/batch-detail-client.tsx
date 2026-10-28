@@ -22,7 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, ChevronLeft, Pencil } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { AttendanceTable } from "@/components/attendance/attendance-table";
-import { UZ } from "@/constants/uz";
+import { useLanguage } from "@/context/lang-context";
 
 interface PackageDetail extends Package { description?: string }
 
@@ -45,6 +45,7 @@ interface Batch {
 export function BatchDetailClient({ batchId, isAdmin }: { batchId: string; isAdmin?: boolean }) {
   const router = useRouter();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [batch, setBatch] = useState<Batch | null>(null);
   const [allScholarships, setAllScholarships] = useState<Scholarship[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,9 +88,9 @@ export function BatchDetailClient({ batchId, isAdmin }: { batchId: string; isAdm
       const updated = await res.json();
       setBatch((prev) => prev ? { ...prev, ...updated } : prev);
       setEditOpen(false);
-      toast({ title: "Batch updated" });
+      toast({ title: t.common.updated });
     } catch {
-      toast({ title: "Error", variant: "destructive" });
+      toast({ title: t.common.error, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -115,9 +116,9 @@ export function BatchDetailClient({ batchId, isAdmin }: { batchId: string; isAdm
       const pkg = await res.json();
       setBatch((prev) => prev ? { ...prev, packages: [...prev.packages, pkg] } : prev);
       setPkgOpen(false);
-      toast({ title: "Package added" });
+      toast({ title: t.settings.addPackage });
     } catch {
-      toast({ title: "Error", variant: "destructive" });
+      toast({ title: t.common.error, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -146,9 +147,9 @@ export function BatchDetailClient({ batchId, isAdmin }: { batchId: string; isAdm
         packages: prev.packages.map((p) => p.id === editingPkg.id ? { ...p, ...updated } : p),
       } : prev);
       setPkgEditOpen(false);
-      toast({ title: "Package updated" });
+      toast({ title: t.common.updated });
     } catch {
-      toast({ title: "Error", variant: "destructive" });
+      toast({ title: t.common.error, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -162,9 +163,9 @@ export function BatchDetailClient({ batchId, isAdmin }: { batchId: string; isAdm
         ...prev,
         packages: prev.packages.filter((p) => p.id !== pkgId),
       } : prev);
-      toast({ title: "Package deleted" });
+      toast({ title: t.common.deleted });
     } catch {
-      toast({ title: "Error", variant: "destructive" });
+      toast({ title: t.common.error, variant: "destructive" });
     }
   }
 
@@ -175,17 +176,17 @@ export function BatchDetailClient({ batchId, isAdmin }: { batchId: string; isAdm
       body: JSON.stringify({ status: "CLOSED" }),
     });
     setBatch((prev) => prev ? { ...prev, status: "CLOSED" } : prev);
-    toast({ title: "Batch closed" });
+    toast({ title: t.batches.closeBatch });
   }
 
   async function deleteBatch() {
     await fetch(`/api/batches/${batchId}`, { method: "DELETE" });
-    toast({ title: "Batch deleted" });
+    toast({ title: t.batches.deleteBatch });
     router.push("/batches");
   }
 
-  if (loading) return <div className="text-muted-foreground">Loading…</div>;
-  if (!batch) return <div className="text-muted-foreground">Batch not found.</div>;
+  if (loading) return <div className="text-muted-foreground">{t.common.loading}</div>;
+  if (!batch) return <div className="text-muted-foreground">{t.batches.batchNotFound}</div>;
 
   const totalExpected = batch.students.flatMap((s) => s.payments).reduce((sum, p) => sum + p.amountDue, 0);
   const totalPaid = batch.students.flatMap((s) => s.payments).reduce((sum, p) => sum + p.amountPaid, 0);
@@ -195,53 +196,55 @@ export function BatchDetailClient({ batchId, isAdmin }: { batchId: string; isAdm
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => router.back()}>
-            <ChevronLeft className="mr-1 h-4 w-4" /> Back
+            <ChevronLeft className="mr-1 h-4 w-4" /> {t.common.back}
           </Button>
           <h1 className="text-2xl font-bold">{batch.name}</h1>
-          <Badge variant={batch.status === "ACTIVE" ? "default" : "secondary"}>{batch.status}</Badge>
+          <Badge variant={batch.status === "ACTIVE" ? "default" : "secondary"}>
+            {batch.status === "ACTIVE" ? t.common.active : t.batches.closeBatch}
+          </Badge>
         </div>
         <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-          <Pencil className="mr-1 h-4 w-4" /> Edit Batch
+          <Pencil className="mr-1 h-4 w-4" /> {t.batches.editBatch}
         </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card>
-          <CardHeader><CardTitle className="text-sm">Period</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">{t.payments.period}</CardTitle></CardHeader>
           <CardContent>
             <p className="text-sm">{formatDate(batch.startDate)}{batch.endDate && ` → ${formatDate(batch.endDate)}`}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle className="text-sm">Revenue</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">{t.batches.revenue}</CardTitle></CardHeader>
           <CardContent>
             <p className="text-lg font-bold">{formatCurrency(totalPaid)}</p>
             <p className="text-xs text-muted-foreground">of {formatCurrency(totalExpected)}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle className="text-sm">Students</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">{t.dashboard.students}</CardTitle></CardHeader>
           <CardContent><p className="text-2xl font-bold">{batch.students.length}</p></CardContent>
         </Card>
       </div>
 
       <Tabs defaultValue="overview">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="attendance">{UZ.attendance.tab}</TabsTrigger>
+          <TabsTrigger value="overview">{t.batches.overview}</TabsTrigger>
+          <TabsTrigger value="attendance">{t.attendance.tab}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 pt-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Packages / Tiers</CardTitle>
+              <CardTitle className="text-base">{t.settings.packages}</CardTitle>
               <Button size="sm" onClick={() => setPkgOpen(true)}>
-                <Plus className="mr-1 h-3.5 w-3.5" /> Add
+                <Plus className="mr-1 h-3.5 w-3.5" /> {t.common.add}
               </Button>
             </CardHeader>
             <CardContent>
               {batch.packages.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No packages yet.</p>
+                <p className="text-sm text-muted-foreground">{t.settings.noPackages}</p>
               ) : (
                 <div className="flex flex-wrap gap-3">
                   {batch.packages.map((p) => (
@@ -262,12 +265,12 @@ export function BatchDetailClient({ batchId, isAdmin }: { batchId: string; isAdm
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Package</AlertDialogTitle>
-                              <AlertDialogDescription>Delete &quot;{p.name}&quot;? Students assigned to this package will be unlinked.</AlertDialogDescription>
+                              <AlertDialogTitle>{t.settings.deletePackage}</AlertDialogTitle>
+                              <AlertDialogDescription>Delete &quot;{p.name}&quot;?</AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeletePackage(p.id)} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
+                              <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeletePackage(p.id)} className="bg-destructive text-destructive-foreground">{t.common.delete}</AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
@@ -286,22 +289,22 @@ export function BatchDetailClient({ batchId, isAdmin }: { batchId: string; isAdm
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Students ({batch.students.length})</CardTitle>
+              <CardTitle className="text-base">{t.dashboard.students} ({batch.students.length})</CardTitle>
               <Link href={`/students?batchId=${batchId}`}>
-                <Button size="sm" variant="outline">View All</Button>
+                <Button size="sm" variant="outline">{t.common.viewAll}</Button>
               </Link>
             </CardHeader>
             <CardContent>
               {batch.students.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No students in this batch.</p>
+                <p className="text-sm text-muted-foreground">{t.batches.noStudents}</p>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Package</TableHead>
-                      <TableHead>Stage</TableHead>
-                      <TableHead>Balance</TableHead>
+                      <TableHead>{t.students.fullName}</TableHead>
+                      <TableHead>{t.students.package}</TableHead>
+                      <TableHead>{t.students.progressStage}</TableHead>
+                      <TableHead>{t.students.balance}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -313,7 +316,7 @@ export function BatchDetailClient({ batchId, isAdmin }: { batchId: string; isAdm
                           <TableCell>{s.package?.name ?? "—"}</TableCell>
                           <TableCell>{s.progressStage?.name ?? "—"}</TableCell>
                           <TableCell className={balance > 0 ? "text-destructive font-medium" : "text-green-600"}>
-                            {balance > 0 ? formatCurrency(balance) : "Paid"}
+                            {balance > 0 ? formatCurrency(balance) : t.payments.paid}
                           </TableCell>
                         </TableRow>
                       );
@@ -326,20 +329,20 @@ export function BatchDetailClient({ batchId, isAdmin }: { batchId: string; isAdm
 
           <div className="flex gap-2">
             {batch.status === "ACTIVE" && (
-              <Button variant="outline" onClick={closeBatch}>Close Batch</Button>
+              <Button variant="outline" onClick={closeBatch}>{t.batches.closeBatch}</Button>
             )}
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm"><Trash2 className="mr-1 h-4 w-4" />Delete Batch</Button>
+                <Button variant="destructive" size="sm"><Trash2 className="mr-1 h-4 w-4" />{t.batches.deleteBatch}</Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Batch</AlertDialogTitle>
-                  <AlertDialogDescription>This will permanently delete the batch and all associated packages. Students will be unlinked. This cannot be undone.</AlertDialogDescription>
+                  <AlertDialogTitle>{t.batches.deleteBatch}</AlertDialogTitle>
+                  <AlertDialogDescription>{t.batches.deleteConfirm}</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={deleteBatch} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
+                  <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
+                  <AlertDialogAction onClick={deleteBatch} className="bg-destructive text-destructive-foreground">{t.common.delete}</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -361,32 +364,32 @@ export function BatchDetailClient({ batchId, isAdmin }: { batchId: string; isAdm
       {/* Edit Batch Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Edit Batch</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t.batches.editBatch}</DialogTitle></DialogHeader>
           <form onSubmit={handleEdit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-name">Name</Label>
+              <Label htmlFor="edit-name">{t.common.name}</Label>
               <Input id="edit-name" name="name" defaultValue={batch.name} required />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-start">Start Date</Label>
+                <Label htmlFor="edit-start">{t.batches.startDate}</Label>
                 <Input id="edit-start" name="startDate" type="date" defaultValue={batch.startDate?.slice(0, 10)} required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-end">End Date</Label>
+                <Label htmlFor="edit-end">{t.batches.endDate}</Label>
                 <Input id="edit-end" name="endDate" type="date" defaultValue={batch.endDate?.slice(0, 10) ?? ""} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Status</Label>
+              <Label>{t.common.status}</Label>
               <select name="status" defaultValue={batch.status}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm">
-                <option value="ACTIVE">Active</option>
-                <option value="CLOSED">Closed</option>
+                <option value="ACTIVE">{t.common.active}</option>
+                <option value="CLOSED">{t.batches.closeBatch}</option>
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Scholarships</Label>
+              <Label>{t.settings.scholarships}</Label>
               <div className="flex flex-wrap gap-2">
                 {allScholarships.map((s) => (
                   <label key={s.id} className="flex items-center gap-1.5 text-sm cursor-pointer">
@@ -403,13 +406,13 @@ export function BatchDetailClient({ batchId, isAdmin }: { batchId: string; isAdm
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-notes">Notes</Label>
+              <Label htmlFor="edit-notes">{t.common.notes}</Label>
               <textarea id="edit-notes" name="notes" rows={3} defaultValue={batch.notes ?? ""}
                 className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground" />
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save Changes"}</Button>
+              <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>{t.common.cancel}</Button>
+              <Button type="submit" disabled={saving}>{saving ? t.common.loading : t.common.saveChanges}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -418,30 +421,30 @@ export function BatchDetailClient({ batchId, isAdmin }: { batchId: string; isAdm
       {/* Edit Package Dialog */}
       <Dialog open={pkgEditOpen} onOpenChange={setPkgEditOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Edit Package</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t.settings.editPackage}</DialogTitle></DialogHeader>
           {editingPkg && (
             <form onSubmit={handleEditPackage} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="epkg-name">Name</Label>
+                <Label htmlFor="epkg-name">{t.common.name}</Label>
                 <Input id="epkg-name" name="name" defaultValue={editingPkg.name} required />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="epkg-price">List Price (UZS)</Label>
+                  <Label htmlFor="epkg-price">{t.settings.listPrice}</Label>
                   <Input id="epkg-price" name="listPrice" type="number" min={0} defaultValue={editingPkg.listPrice} required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="epkg-eb">Early Bird (UZS)</Label>
+                  <Label htmlFor="epkg-eb">{t.payments.earlyBird}</Label>
                   <Input id="epkg-eb" name="earlyBirdPrice" type="number" min={0} defaultValue={editingPkg.earlyBirdPrice ?? ""} />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="epkg-desc">Description</Label>
+                <Label htmlFor="epkg-desc">{t.payments.description}</Label>
                 <Input id="epkg-desc" name="description" defaultValue={editingPkg.description ?? ""} />
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setPkgEditOpen(false)}>Cancel</Button>
-                <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save Changes"}</Button>
+                <Button type="button" variant="outline" onClick={() => setPkgEditOpen(false)}>{t.common.cancel}</Button>
+                <Button type="submit" disabled={saving}>{saving ? t.common.loading : t.common.saveChanges}</Button>
               </DialogFooter>
             </form>
           )}
@@ -450,29 +453,29 @@ export function BatchDetailClient({ batchId, isAdmin }: { batchId: string; isAdm
 
       <Dialog open={pkgOpen} onOpenChange={setPkgOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Add Package</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t.settings.addPackage}</DialogTitle></DialogHeader>
           <form onSubmit={addPackage} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="pkg-name">Name</Label>
+              <Label htmlFor="pkg-name">{t.common.name}</Label>
               <Input id="pkg-name" name="name" placeholder="Basic / Standart / VIP" required />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="pkg-price">List Price (UZS)</Label>
+                <Label htmlFor="pkg-price">{t.settings.listPrice}</Label>
                 <Input id="pkg-price" name="listPrice" type="number" min={0} required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pkg-eb">Early Bird (UZS)</Label>
+                <Label htmlFor="pkg-eb">{t.payments.earlyBird}</Label>
                 <Input id="pkg-eb" name="earlyBirdPrice" type="number" min={0} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="pkg-desc">Description</Label>
+              <Label htmlFor="pkg-desc">{t.payments.description}</Label>
               <Input id="pkg-desc" name="description" />
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setPkgOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={saving}>{saving ? "Adding…" : "Add Package"}</Button>
+              <Button type="button" variant="outline" onClick={() => setPkgOpen(false)}>{t.common.cancel}</Button>
+              <Button type="submit" disabled={saving}>{saving ? t.common.loading : t.settings.addPackage}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { downloadCSV, downloadExcel, openPrintWindow } from "@/lib/export";
+import { useLanguage } from "@/context/lang-context";
 
 interface Batch { id: string; name: string }
 interface Package { id: string; name: string; listPrice: number }
@@ -54,6 +55,7 @@ export function StudentsClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const [students, setStudents] = useState<Student[]>([]);
   const [batches, setBatches] = useState<Batch[]>([]);
@@ -157,9 +159,9 @@ export function StudentsClient() {
       if (!res.ok) throw new Error("Failed");
       await loadStudents();
       setOpen(false);
-      toast({ title: "Student added successfully" });
+      toast({ title: t.students.addStudent });
     } catch {
-      toast({ title: "Error", description: "Failed to add student", variant: "destructive" });
+      toast({ title: t.common.error, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -179,9 +181,9 @@ export function StudentsClient() {
       await loadStudents();
       setBulkOpen(false);
       setBulkValue("");
-      toast({ title: `Updated ${count} student${count !== 1 ? "s" : ""}` });
+      toast({ title: t.common.updated });
     } catch {
-      toast({ title: "Error", variant: "destructive" });
+      toast({ title: t.common.error, variant: "destructive" });
     } finally {
       setBulkSaving(false);
     }
@@ -263,29 +265,29 @@ export function StudentsClient() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Students</h1>
+        <h1 className="text-2xl font-bold">{t.students.title}</h1>
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
                 <Download className="mr-1.5 h-3.5 w-3.5" />
-                Export {selectedIds.size > 0 ? `(${selectedIds.size})` : ""}
+                {t.attendance.exportMenu} {selectedIds.size > 0 ? `(${selectedIds.size})` : ""}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleExportCSV}>
-                <FileText className="mr-2 h-4 w-4" /> Export CSV
+                <FileText className="mr-2 h-4 w-4" /> {t.attendance.exportCsv}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleExportExcel}>
-                <FileSpreadsheet className="mr-2 h-4 w-4" /> Export Excel (.xlsx)
+                <FileSpreadsheet className="mr-2 h-4 w-4" /> {t.attendance.exportExcel}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleExportPDF}>
-                <Printer className="mr-2 h-4 w-4" /> Print / Export PDF
+                <Printer className="mr-2 h-4 w-4" /> {t.attendance.exportPdf}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <Button onClick={() => setOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Add Student
+            <Plus className="mr-2 h-4 w-4" /> {t.students.addStudent}
           </Button>
         </div>
       </div>
@@ -295,17 +297,17 @@ export function StudentsClient() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
-            placeholder="Search by name…"
+            placeholder={t.students.search}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <Select value={selectedBatch} onValueChange={setSelectedBatch}>
           <SelectTrigger className="w-52">
-            <SelectValue placeholder="All batches" />
+            <SelectValue placeholder={t.students.allBatches} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Batches</SelectItem>
+            <SelectItem value="all">{t.students.allBatches}</SelectItem>
             {batches.map((b) => (
               <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
             ))}
@@ -350,12 +352,12 @@ export function StudentsClient() {
                     onChange={toggleSelectAll}
                   />
                 </TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Batch</TableHead>
-                <TableHead>Package</TableHead>
-                <TableHead>Scholarships</TableHead>
-                <TableHead>Stage</TableHead>
-                <TableHead>Balance</TableHead>
+                <TableHead>{t.students.fullName}</TableHead>
+                <TableHead>{t.batches.title}</TableHead>
+                <TableHead>{t.students.package}</TableHead>
+                <TableHead>{t.students.scholarships}</TableHead>
+                <TableHead>{t.students.progressStage}</TableHead>
+                <TableHead>{t.students.balance}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -393,7 +395,7 @@ export function StudentsClient() {
                       <span className="text-muted-foreground">—</span>
                     ) : (
                       <span className={`font-medium ${balance(s) > 0 ? "text-destructive" : "text-green-600 dark:text-green-400"}`}>
-                        {balance(s) > 0 ? formatCurrency(balance(s)) : "Paid"}
+                        {balance(s) > 0 ? formatCurrency(balance(s)) : t.payments.paid}
                       </span>
                     )}
                   </TableCell>
@@ -408,19 +410,19 @@ export function StudentsClient() {
       {selectedIds.size > 0 && (
         <div className="fixed bottom-4 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
           <div className="pointer-events-auto flex flex-wrap items-center gap-2 rounded-full border bg-background px-5 py-2.5 shadow-xl">
-            <span className="text-sm font-semibold">{selectedIds.size} selected</span>
+            <span className="text-sm font-semibold">{selectedIds.size} {t.students.selectAll.toLowerCase()}</span>
             <div className="h-4 w-px bg-border mx-1" />
             <Button size="sm" variant="outline" className="rounded-full h-7 text-xs"
               onClick={() => { setBulkAction("stage"); setBulkValue(""); setBulkOpen(true); }}>
-              Assign Stage
+              {t.students.moveToStage}
             </Button>
             <Button size="sm" variant="outline" className="rounded-full h-7 text-xs"
               onClick={() => { setBulkAction("batch"); setBulkValue(""); setBulkOpen(true); }}>
-              Move to Batch
+              {t.students.moveToBatch}
             </Button>
             <Button size="sm" variant="outline" className="rounded-full h-7 text-xs"
               onClick={() => { setBulkAction("scholarship"); setBulkValue(""); setBulkOpen(true); }}>
-              Add Scholarship
+              {t.students.addScholarship}
             </Button>
             <button
               onClick={() => setSelectedIds(new Set())}
@@ -437,17 +439,17 @@ export function StudentsClient() {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>
-              {bulkAction === "stage" ? "Assign Progress Stage" :
-               bulkAction === "batch" ? "Move to Batch" : "Add Scholarship"}
+              {bulkAction === "stage" ? t.students.moveToStage :
+               bulkAction === "batch" ? t.students.moveToBatch : t.students.addScholarship}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <p className="text-sm text-muted-foreground">
-              Apply to <strong>{selectedIds.size}</strong> selected student{selectedIds.size !== 1 ? "s" : ""}.
+              {t.students.bulkAction}: <strong>{selectedIds.size}</strong>
             </p>
             {bulkAction === "stage" && (
               <Select value={bulkValue} onValueChange={setBulkValue}>
-                <SelectTrigger><SelectValue placeholder="Select stage" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t.students.progressStage} /></SelectTrigger>
                 <SelectContent>
                   {stages.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                 </SelectContent>
@@ -455,7 +457,7 @@ export function StudentsClient() {
             )}
             {bulkAction === "batch" && (
               <Select value={bulkValue} onValueChange={setBulkValue}>
-                <SelectTrigger><SelectValue placeholder="Select batch" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t.batches.title} /></SelectTrigger>
                 <SelectContent>
                   {batches.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
                 </SelectContent>
@@ -463,7 +465,7 @@ export function StudentsClient() {
             )}
             {bulkAction === "scholarship" && (
               <Select value={bulkValue} onValueChange={setBulkValue}>
-                <SelectTrigger><SelectValue placeholder="Select scholarship" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t.students.scholarships} /></SelectTrigger>
                 <SelectContent>
                   {scholarships.map((s) => <SelectItem key={s.id} value={s.id}>{s.shortCode} — {s.name}</SelectItem>)}
                 </SelectContent>
@@ -471,9 +473,9 @@ export function StudentsClient() {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBulkOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setBulkOpen(false)}>{t.common.cancel}</Button>
             <Button disabled={!bulkValue || bulkSaving} onClick={handleBulkApply}>
-              {bulkSaving ? "Applying…" : "Apply"}
+              {bulkSaving ? t.common.loading : t.common.save}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -482,36 +484,36 @@ export function StudentsClient() {
       {/* Add Student Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Add Student</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t.students.addStudent}</DialogTitle></DialogHeader>
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2 col-span-2">
-                <Label htmlFor="fullName">Full Name *</Label>
+                <Label htmlFor="fullName">{t.students.fullName} *</Label>
                 <Input id="fullName" name="fullName" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone / Telegram</Label>
+                <Label htmlFor="phone">{t.students.phoneTelegram}</Label>
                 <Input id="phone" name="phone" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="dob">Date of Birth</Label>
+                <Label htmlFor="dob">{t.students.dob}</Label>
                 <Input id="dob" name="dob" type="date" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Batch *</Label>
+                <Label>{t.batches.title} *</Label>
                 <Select name="batchId" required value={formBatchId} onValueChange={setFormBatchId}>
-                  <SelectTrigger><SelectValue placeholder="Select batch" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t.batches.title} /></SelectTrigger>
                   <SelectContent>
                     {batches.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Package</Label>
+                <Label>{t.students.package}</Label>
                 <Select name="packageId" disabled={packages.length === 0}>
-                  <SelectTrigger><SelectValue placeholder={packages.length === 0 ? "Select batch first" : "Select package"} /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={packages.length === 0 ? t.batches.title : t.students.package} /></SelectTrigger>
                   <SelectContent>
                     {packages.map((p) => <SelectItem key={p.id} value={p.id}>{p.name} — {p.listPrice.toLocaleString()} UZS</SelectItem>)}
                   </SelectContent>
@@ -520,63 +522,63 @@ export function StudentsClient() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Degree</Label>
+                <Label>{t.students.degree}</Label>
                 <Select name="degree">
-                  <SelectTrigger><SelectValue placeholder="Select degree" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t.students.degree} /></SelectTrigger>
                   <SelectContent>
                     {DEGREES.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="major">Major</Label>
+                <Label htmlFor="major">{t.students.major}</Label>
                 <Input id="major" name="major" />
               </div>
             </div>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Currency</Label>
+                  <Label>{t.students.currency}</Label>
                   <Select value={priceCurrency} onValueChange={setPriceCurrency}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="UZS">UZS (Uzbek Sum)</SelectItem>
-                      <SelectItem value="TL">TL (Turkish Lira)</SelectItem>
+                      <SelectItem value="UZS">{t.students.uzs}</SelectItem>
+                      <SelectItem value="TL">{t.students.tl}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="priceCharged">{priceCurrency === "TL" ? "Amount in TL" : "Price Charged (UZS)"}</Label>
+                  <Label htmlFor="priceCharged">{priceCurrency === "TL" ? t.students.tl : t.students.price}</Label>
                   <Input id="priceCharged" name="priceCharged" type="number" min={0} />
                 </div>
               </div>
               {priceCurrency === "TL" && (
                 <div className="space-y-2">
-                  <Label htmlFor="priceChargedUZS">UZS Equivalent (conversion)</Label>
-                  <Input id="priceChargedUZS" name="priceChargedUZS" type="number" min={0} placeholder="Enter the UZS equivalent amount" />
+                  <Label htmlFor="priceChargedUZS">{t.students.uzsEquivalent}</Label>
+                  <Input id="priceChargedUZS" name="priceChargedUZS" type="number" min={0} />
                 </div>
               )}
             </div>
             <div className="space-y-2">
-              <Label>Discount Type</Label>
+              <Label>{t.students.discountType}</Label>
               <Select name="discountTypeId">
-                <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t.common.all} /></SelectTrigger>
                 <SelectContent>
                   {discounts.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Progress Stage</Label>
+              <Label>{t.students.progressStage}</Label>
               <Select name="progressStageId">
-                <SelectTrigger><SelectValue placeholder="Select stage" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t.students.progressStage} /></SelectTrigger>
                 <SelectContent>
                   {stages.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Scholarships Applying For</Label>
+              <Label>{t.students.scholarshipsFor}</Label>
               <div className="flex flex-wrap gap-2">
                 {scholarships.map((s) => (
                   <label key={s.id} className="flex items-center gap-1.5 text-sm cursor-pointer">
@@ -595,28 +597,28 @@ export function StudentsClient() {
                   checked={paidInFull}
                   onChange={(e) => setPaidInFull(e.target.checked)}
                 />
-                <span className="text-sm font-medium">Paid in full (upfront payment before enrolling)</span>
+                <span className="text-sm font-medium">{t.students.paidInFull}</span>
               </label>
               {paidInFull && (
                 <div className="grid grid-cols-2 gap-4 pt-1">
                   <div className="space-y-2">
-                    <Label htmlFor="paymentDate">Payment Date *</Label>
+                    <Label htmlFor="paymentDate">{t.payments.paidDate} *</Label>
                     <Input id="paymentDate" name="paymentDate" type="date" required={paidInFull} defaultValue={new Date().toISOString().slice(0, 10)} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="paymentNotes">Payment Notes</Label>
-                    <Input id="paymentNotes" name="paymentNotes" placeholder="Receipt #, bank, etc." />
+                    <Label htmlFor="paymentNotes">{t.students.paymentNotes}</Label>
+                    <Input id="paymentNotes" name="paymentNotes" />
                   </div>
                 </div>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+              <Label htmlFor="notes">{t.common.notes}</Label>
               <Textarea id="notes" name="notes" rows={3} />
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={saving}>{saving ? "Adding…" : "Add Student"}</Button>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t.common.cancel}</Button>
+              <Button type="submit" disabled={saving}>{saving ? t.common.loading : t.students.addStudent}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -688,15 +690,16 @@ function KanbanView({ students, stages, balance, onNavigate }: {
 }
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
+  const { t } = useLanguage();
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
         <Users className="h-6 w-6 text-muted-foreground" />
       </div>
-      <h3 className="mt-4 text-base font-semibold">No students yet</h3>
-      <p className="mt-1 text-sm text-muted-foreground">Add your first student to get started.</p>
+      <h3 className="mt-4 text-base font-semibold">{t.students.noStudents}</h3>
+      <p className="mt-1 text-sm text-muted-foreground">{t.students.addFirst}</p>
       <Button className="mt-4" size="sm" onClick={onAdd}>
-        <Plus className="mr-2 h-4 w-4" /> Add Student
+        <Plus className="mr-2 h-4 w-4" /> {t.students.addStudent}
       </Button>
     </div>
   );

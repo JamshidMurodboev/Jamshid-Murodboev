@@ -9,6 +9,7 @@ import {
 import { formatCurrency } from "@/lib/utils";
 import { Users, TrendingUp, CreditCard, AlertCircle, Trophy } from "lucide-react";
 import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from "recharts";
+import { useLanguage } from "@/context/lang-context";
 
 interface BatchRevenue {
   id: string; name: string; status: string;
@@ -33,6 +34,7 @@ const PIE_COLORS = ["#6366f1", "#8b5cf6", "#a78bfa", "#c4b5fd", "#ddd6fe"];
 
 export function DashboardClient() {
   const [data, setData] = useState<DashboardData | null>(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetch("/api/dashboard").then((r) => r.json()).then(setData).catch(console.error);
@@ -48,70 +50,67 @@ export function DashboardClient() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+      <h1 className="text-2xl font-bold">{t.dashboard.title}</h1>
 
-      {/* Summary KPI row */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
-          title="Total Students"
+          title={t.dashboard.totalStudents}
           value={data.totalStudents.toString()}
           icon={<Users className="h-4 w-4" />}
           color="blue"
         />
         <StatCard
-          title="Revenue Collected"
+          title={t.dashboard.revenueCollected}
           value={formatCurrency(data.totalCollected)}
-          sub={`${collectionPct}% of ${formatCurrency(data.totalDue)} billed`}
+          sub={t.dashboard.billed_pct(collectionPct, formatCurrency(data.totalDue))}
           icon={<TrendingUp className="h-4 w-4" />}
           color="green"
         />
         <StatCard
-          title="Outstanding"
+          title={t.dashboard.outstanding}
           value={formatCurrency(data.outstanding)}
-          sub="payments still due"
+          sub={t.dashboard.paymentsDue}
           icon={<CreditCard className="h-4 w-4" />}
           color={data.outstanding > 0 ? "red" : "green"}
           highlight={data.outstanding > 0}
         />
         <StatCard
-          title="Win Rate"
+          title={t.dashboard.winRate}
           value={data.winRate !== null ? `${data.winRate}%` : "—"}
           sub={data.studentsWithResult > 0
             ? `${data.won} of ${data.studentsWithResult} results`
-            : "No results yet"}
+            : t.dashboard.noResultsYet}
           icon={<Trophy className="h-4 w-4" />}
           color="purple"
         />
       </div>
 
-      {/* Overdue alert */}
       {data.paymentStatusBreakdown.overdue > 0 && (
         <div className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           <AlertCircle className="h-4 w-4 shrink-0" />
-          <span>
-            <strong>{data.paymentStatusBreakdown.overdue}</strong> overdue payment{data.paymentStatusBreakdown.overdue !== 1 ? "s" : ""} — check the Payments page.
-          </span>
+          <span dangerouslySetInnerHTML={{
+            __html: t.dashboard.overdueAlert(data.paymentStatusBreakdown.overdue)
+          }} />
         </div>
       )}
 
-      {/* Per-batch revenue table */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Revenue by Batch</CardTitle>
+          <CardTitle className="text-base">{t.dashboard.revenueByBatch}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {data.batchRevenue.length === 0 ? (
-            <p className="px-6 py-8 text-center text-sm text-muted-foreground">No batches yet.</p>
+            <p className="px-6 py-8 text-center text-sm text-muted-foreground">{t.dashboard.noBatchesYet}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40">
-                  <TableHead>Batch</TableHead>
-                  <TableHead className="text-right">Students</TableHead>
-                  <TableHead className="text-right">Billed</TableHead>
-                  <TableHead className="text-right">Collected</TableHead>
-                  <TableHead className="text-right">Outstanding</TableHead>
-                  <TableHead className="text-right">Rate</TableHead>
+                  <TableHead>{t.dashboard.batch}</TableHead>
+                  <TableHead className="text-right">{t.dashboard.students}</TableHead>
+                  <TableHead className="text-right">{t.dashboard.billed}</TableHead>
+                  <TableHead className="text-right">{t.dashboard.collected}</TableHead>
+                  <TableHead className="text-right">{t.dashboard.outstanding}</TableHead>
+                  <TableHead className="text-right">{t.dashboard.rate}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -121,7 +120,7 @@ export function DashboardClient() {
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{b.name}</span>
                         <Badge variant={b.status === "ACTIVE" ? "default" : "secondary"} className="text-xs">
-                          {b.status}
+                          {b.status === "ACTIVE" ? t.common.active : t.common.inactive}
                         </Badge>
                       </div>
                     </TableCell>
@@ -145,9 +144,8 @@ export function DashboardClient() {
                     </TableCell>
                   </TableRow>
                 ))}
-                {/* Totals row */}
                 <TableRow className="border-t-2 bg-muted/20 font-semibold">
-                  <TableCell>Total</TableCell>
+                  <TableCell>{t.common.total}</TableCell>
                   <TableCell className="text-right">{data.totalStudents}</TableCell>
                   <TableCell className="text-right">{formatCurrency(data.totalDue)}</TableCell>
                   <TableCell className="text-right text-green-600 dark:text-green-400">{formatCurrency(data.totalCollected)}</TableCell>
@@ -166,11 +164,10 @@ export function DashboardClient() {
         </CardContent>
       </Card>
 
-      {/* Students by Package chart */}
       {packageChartData.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Students by Package</CardTitle>
+            <CardTitle className="text-base">{t.dashboard.studentsByPackage}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>

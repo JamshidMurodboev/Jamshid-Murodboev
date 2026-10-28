@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { downloadCSV, downloadExcel, openPrintWindow } from "@/lib/export";
+import { useLanguage } from "@/context/lang-context";
 import { CreditCard, AlertCircle, CheckCircle2, Clock, Download, FileSpreadsheet, FileText, Printer, Gift } from "lucide-react";
 
 interface StudentInfo {
@@ -57,6 +58,7 @@ function discountLabel(student: StudentInfo): string {
 }
 
 export function PaymentsClient() {
+  const { t } = useLanguage();
   const [rows, setRows] = useState<PaymentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState("all");
@@ -106,35 +108,35 @@ export function PaymentsClient() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <h1 className="text-2xl font-bold">Payments</h1>
+        <h1 className="text-2xl font-bold">{t.payments.title}</h1>
         <div className="flex items-center gap-2">
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger className="w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="PENDING">Pending</SelectItem>
-              <SelectItem value="OVERDUE">Overdue</SelectItem>
-              <SelectItem value="PAID">Paid</SelectItem>
-              <SelectItem value="FREE">Free seats</SelectItem>
+              <SelectItem value="all">{t.common.all}</SelectItem>
+              <SelectItem value="PENDING">{t.payments.pending}</SelectItem>
+              <SelectItem value="OVERDUE">{t.payments.overdue}</SelectItem>
+              <SelectItem value="PAID">{t.payments.paid}</SelectItem>
+              <SelectItem value="FREE">{t.payments.free}</SelectItem>
             </SelectContent>
           </Select>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" disabled={rows.length === 0}>
-                <Download className="mr-1.5 h-4 w-4" /> Export
+                <Download className="mr-1.5 h-4 w-4" /> {t.attendance.exportMenu}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleExportCSV}>
-                <FileText className="mr-2 h-4 w-4" /> CSV
+                <FileText className="mr-2 h-4 w-4" /> {t.attendance.exportCsv}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleExportExcel}>
-                <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel
+                <FileSpreadsheet className="mr-2 h-4 w-4" /> {t.attendance.exportExcel}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleExportPDF}>
-                <Printer className="mr-2 h-4 w-4" /> Print / PDF
+                <Printer className="mr-2 h-4 w-4" /> {t.attendance.exportPdf}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -146,32 +148,32 @@ export function PaymentsClient() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           <SummaryTile
             icon={<CreditCard className="h-4 w-4" />}
-            label="Total Due"
+            label={t.payments.amountDue}
             value={formatCurrency(totalDue)}
             color="blue"
           />
           <SummaryTile
             icon={<CheckCircle2 className="h-4 w-4" />}
-            label={`Paid (${paid.length})`}
+            label={`${t.payments.paid} (${paid.length})`}
             value={formatCurrency(totalPaid)}
             color="green"
           />
           <SummaryTile
             icon={<Clock className="h-4 w-4" />}
-            label={`Pending (${pending.length})`}
+            label={`${t.payments.pending} (${pending.length})`}
             value={formatCurrency(pending.reduce((s, p) => s + (p.amountDue - p.amountPaid), 0))}
             color="amber"
           />
           <SummaryTile
             icon={<AlertCircle className="h-4 w-4" />}
-            label={`Overdue (${overdue.length})`}
+            label={`${t.payments.overdue} (${overdue.length})`}
             value={formatCurrency(overdue.reduce((s, p) => s + (p.amountDue - p.amountPaid), 0))}
             color="red"
           />
           <SummaryTile
             icon={<Gift className="h-4 w-4" />}
-            label={`Free (${freeRows.length})`}
-            value={`${freeRows.length} student${freeRows.length !== 1 ? "s" : ""}`}
+            label={`${t.payments.free} (${freeRows.length})`}
+            value={`${freeRows.length} ${t.dashboard.students.toLowerCase()}`}
             color="purple"
           />
         </div>
@@ -181,7 +183,7 @@ export function PaymentsClient() {
         <div className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span>
-            <strong>{overdue.length}</strong> overdue payment{overdue.length !== 1 ? "s" : ""} require attention.
+            <strong>{overdue.length}</strong> {t.payments.overdue.toLowerCase()}
           </span>
         </div>
       )}
@@ -193,9 +195,9 @@ export function PaymentsClient() {
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
             <CreditCard className="h-6 w-6 text-muted-foreground" />
           </div>
-          <h3 className="mt-4 text-base font-semibold">No payments found</h3>
+          <h3 className="mt-4 text-base font-semibold">{t.payments.noPayments}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            {status !== "all" ? "Try switching the filter above." : "Add payments from a student's profile page."}
+            {status !== "all" ? t.common.noData : t.payments.noPaymentsYet}
           </p>
         </div>
       ) : (
@@ -203,16 +205,16 @@ export function PaymentsClient() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
-                <TableHead>Student</TableHead>
-                <TableHead>Batch</TableHead>
-                <TableHead>Package</TableHead>
-                <TableHead>Discount</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead>Amount Due</TableHead>
-                <TableHead>Paid</TableHead>
-                <TableHead>Balance</TableHead>
-                <TableHead>Paid On</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>{t.payments.student}</TableHead>
+                <TableHead>{t.batches.title}</TableHead>
+                <TableHead>{t.students.package}</TableHead>
+                <TableHead>{t.payments.discount}</TableHead>
+                <TableHead>{t.payments.dueDate}</TableHead>
+                <TableHead>{t.payments.amountDue}</TableHead>
+                <TableHead>{t.payments.paid}</TableHead>
+                <TableHead>{t.students.balance}</TableHead>
+                <TableHead>{t.payments.paidOn}</TableHead>
+                <TableHead>{t.common.status}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronLeft, Plus, Pencil, Trash2, GraduationCap, Phone, Calendar } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
+import { useLanguage } from "@/context/lang-context";
 
 interface Payment {
   id: string; amountDue: number; amountPaid: number; dueDate: string;
@@ -55,6 +56,7 @@ const STATUS_VARIANT: Record<string, "success" | "warning" | "destructive"> = {
 export function StudentDetailClient({ studentId }: { studentId: string }) {
   const router = useRouter();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [student, setStudent] = useState<Student | null>(null);
   const [stages, setStages] = useState<ProgressStage[]>([]);
   const [scholarships, setScholarships] = useState<Scholarship[]>([]);
@@ -92,7 +94,7 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
       body: JSON.stringify({ progressStageId: stageId }),
     });
     await loadStudent();
-    toast({ title: "Stage updated" });
+    toast({ title: t.common.updated });
   }
 
   async function handleEdit(e: React.FormEvent<HTMLFormElement>) {
@@ -125,9 +127,9 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
       });
       await loadStudent();
       setEditOpen(false);
-      toast({ title: "Student updated" });
+      toast({ title: t.common.updated });
     } catch {
-      toast({ title: "Error", variant: "destructive" });
+      toast({ title: t.common.error, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -153,9 +155,9 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
       await loadStudent();
       setPayOpen(false);
       setEditingPayment(null);
-      toast({ title: "Payment added" });
+      toast({ title: t.common.saved });
     } catch {
-      toast({ title: "Error", variant: "destructive" });
+      toast({ title: t.common.error, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -181,9 +183,9 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
       await loadStudent();
       setEditingPayment(null);
       setPayOpen(false);
-      toast({ title: "Payment updated" });
+      toast({ title: t.common.updated });
     } catch {
-      toast({ title: "Error", variant: "destructive" });
+      toast({ title: t.common.error, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -192,12 +194,12 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
   async function deletePayment(id: string) {
     await fetch(`/api/payments/${id}`, { method: "DELETE" });
     await loadStudent();
-    toast({ title: "Payment deleted" });
+    toast({ title: t.common.deleted });
   }
 
   async function archiveStudent() {
     await fetch(`/api/students/${studentId}`, { method: "DELETE" });
-    toast({ title: "Student archived" });
+    toast({ title: t.students.archiveStudent });
     router.push("/students");
   }
 
@@ -212,7 +214,7 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
   }
 
   if (loading) return <StudentDetailSkeleton />;
-  if (!student) return <div className="text-muted-foreground">Student not found.</div>;
+  if (!student) return <div className="text-muted-foreground">{t.students.studentNotFound}</div>;
 
   const totalDue = student.payments.reduce((sum, p) => sum + p.amountDue, 0);
   const totalPaid = student.payments.reduce((sum, p) => sum + p.amountPaid, 0);
@@ -223,7 +225,7 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
     <div className="space-y-6">
       {/* Back button */}
       <Button variant="ghost" size="sm" className="-ml-2" onClick={() => router.back()}>
-        <ChevronLeft className="mr-1 h-4 w-4" /> Back to Students
+        <ChevronLeft className="mr-1 h-4 w-4" /> {t.common.back}
       </Button>
 
       {/* Profile Card */}
@@ -269,22 +271,22 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={openEditDialog}>
-              <Pencil className="mr-1 h-4 w-4" /> Edit
+              <Pencil className="mr-1 h-4 w-4" /> {t.common.edit}
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm"><Trash2 className="mr-1 h-4 w-4" />Archive</Button>
+                <Button variant="destructive" size="sm"><Trash2 className="mr-1 h-4 w-4" />{t.students.archiveStudent}</Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Archive Student</AlertDialogTitle>
+                  <AlertDialogTitle>{t.students.archiveStudent}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will hide the student from active lists. Payment history is preserved.
+                    {t.common.confirm}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={archiveStudent}>Archive</AlertDialogAction>
+                  <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
+                  <AlertDialogAction onClick={archiveStudent}>{t.common.archive}</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -294,7 +296,7 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
 
       {/* Quick Stage Selector */}
       <div className="flex items-center gap-3 flex-wrap">
-        <span className="text-sm font-medium text-muted-foreground">Stage:</span>
+        <span className="text-sm font-medium text-muted-foreground">{t.students.progressStage}:</span>
         <div className="flex flex-wrap gap-2">
           {stages.map((s) => (
             <button
@@ -314,38 +316,38 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle className="text-base">Info</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t.settings.info}</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <Row label="Batch" value={student.batch.name} />
-            <Row label="Package" value={student.package?.name} />
-            <Row label="Degree" value={student.degree} />
-            <Row label="Major" value={student.major} />
-            <Row label="DOB" value={formatDate(student.dob)} />
-            <Row label="Phone" value={student.phone} />
-            <Row label="Scholarships">
+            <Row label={t.batches.title} value={student.batch.name} />
+            <Row label={t.students.package} value={student.package?.name} />
+            <Row label={t.students.degree} value={student.degree} />
+            <Row label={t.students.major} value={student.major} />
+            <Row label={t.students.dob} value={formatDate(student.dob)} />
+            <Row label={t.students.phone} value={student.phone} />
+            <Row label={t.students.scholarships}>
               <div className="flex flex-wrap gap-1">
                 {student.scholarships.map(({ scholarship: s }) => (
                   <Badge key={s.id} variant="outline">{s.shortCode}</Badge>
                 ))}
               </div>
             </Row>
-            <Row label="Discount" value={student.discountType?.name} />
-            <Row label="Price Charged" value={
+            <Row label={t.students.discountType} value={student.discountType?.name} />
+            <Row label={t.students.price} value={
               student.priceCharged
                 ? student.priceCurrency === "TL"
                   ? `${student.priceOriginalAmount?.toLocaleString()} TL ≈ ${formatCurrency(student.priceCharged)}`
                   : formatCurrency(student.priceCharged)
                 : undefined
             } />
-            {student.notes && <Row label="Notes" value={student.notes} />}
+            {student.notes && <Row label={t.common.notes} value={student.notes} />}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-base">Documents</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t.batches.documents}</CardTitle></CardHeader>
           <CardContent>
             {student.documentLinks.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No documents linked.</p>
+              <p className="text-sm text-muted-foreground">{t.batches.noDocuments}</p>
             ) : (
               <ul className="space-y-1">
                 {student.documentLinks.map((link, i) => (
@@ -364,27 +366,27 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-base">Payments</CardTitle>
+            <CardTitle className="text-base">{t.payments.title}</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Paid {formatCurrency(totalPaid)} of {formatCurrency(totalDue)}
+              {t.payments.paid} {formatCurrency(totalPaid)} of {formatCurrency(totalDue)}
             </p>
           </div>
           <Button size="sm" onClick={() => { setEditingPayment(null); setPayOpen(true); }}>
-            <Plus className="mr-1 h-3.5 w-3.5" /> Add Payment
+            <Plus className="mr-1 h-3.5 w-3.5" /> {t.common.add}
           </Button>
         </CardHeader>
         <CardContent>
           {student.payments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No installments scheduled.</p>
+            <p className="text-sm text-muted-foreground">{t.payments.noInstallments}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead>Amount Due</TableHead>
-                  <TableHead>Paid</TableHead>
-                  <TableHead>Paid On</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{t.payments.dueDate}</TableHead>
+                  <TableHead>{t.payments.amountDue}</TableHead>
+                  <TableHead>{t.payments.paid}</TableHead>
+                  <TableHead>{t.payments.paidOn}</TableHead>
+                  <TableHead>{t.common.status}</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -412,12 +414,12 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Payment</AlertDialogTitle>
-                              <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
+                              <AlertDialogTitle>{t.payments.deletePayment}</AlertDialogTitle>
+                              <AlertDialogDescription>{t.payments.deleteConfirm}</AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => deletePayment(p.id)}>Delete</AlertDialogAction>
+                              <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deletePayment(p.id)}>{t.common.delete}</AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
@@ -435,40 +437,40 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
       <Dialog open={payOpen} onOpenChange={(o) => { setPayOpen(o); if (!o) setEditingPayment(null); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingPayment ? "Edit Payment" : "Add Payment"}</DialogTitle>
+            <DialogTitle>{editingPayment ? t.students.editStudent : t.common.add}</DialogTitle>
           </DialogHeader>
           <form onSubmit={editingPayment ? updatePayment : addPayment} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="amountDue">Amount Due (UZS)</Label>
+                <Label htmlFor="amountDue">{t.payments.amountDue}</Label>
                 <Input id="amountDue" name="amountDue" type="number" min={0} required
                   defaultValue={editingPayment?.amountDue} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="dueDate">Due Date</Label>
+                <Label htmlFor="dueDate">{t.payments.dueDate}</Label>
                 <Input id="dueDate" name="dueDate" type="date" required
                   defaultValue={editingPayment?.dueDate?.slice(0, 10)} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="amountPaid">Amount Paid (UZS)</Label>
+                <Label htmlFor="amountPaid">{t.payments.amountDueUzs}</Label>
                 <Input id="amountPaid" name="amountPaid" type="number" min={0}
                   defaultValue={editingPayment?.amountPaid ?? 0} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="paidDate">Paid Date</Label>
+                <Label htmlFor="paidDate">{t.payments.paidOn}</Label>
                 <Input id="paidDate" name="paidDate" type="date"
                   defaultValue={editingPayment?.paidDate?.slice(0, 10)} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="pay-notes">Notes</Label>
+              <Label htmlFor="pay-notes">{t.common.notes}</Label>
               <Input id="pay-notes" name="notes" defaultValue={editingPayment?.notes ?? ""} />
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => { setPayOpen(false); setEditingPayment(null); }}>Cancel</Button>
-              <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
+              <Button type="button" variant="outline" onClick={() => { setPayOpen(false); setEditingPayment(null); }}>{t.common.cancel}</Button>
+              <Button type="submit" disabled={saving}>{saving ? t.common.loading : t.common.save}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -477,29 +479,29 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
       {/* Edit Student Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Edit Student</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t.students.editStudent}</DialogTitle></DialogHeader>
           <form onSubmit={handleEdit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-fullName">Full Name</Label>
+              <Label htmlFor="edit-fullName">{t.students.fullName}</Label>
               <Input id="edit-fullName" name="fullName" defaultValue={student.fullName} required />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-phone">Phone</Label>
+                <Label htmlFor="edit-phone">{t.students.phone}</Label>
                 <Input id="edit-phone" name="phone" defaultValue={student.phone ?? ""} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-dob">DOB</Label>
+                <Label htmlFor="edit-dob">{t.students.dob}</Label>
                 <Input id="edit-dob" name="dob" type="date" defaultValue={student.dob?.slice(0, 10) ?? ""} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-major">Major</Label>
+                <Label htmlFor="edit-major">{t.students.major}</Label>
                 <Input id="edit-major" name="major" defaultValue={student.major ?? ""} />
               </div>
               <div className="space-y-2">
-                <Label>Degree</Label>
+                <Label>{t.students.degree}</Label>
                 <Select name="degree" defaultValue={student.degree ?? ""}>
                   <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent>
@@ -510,7 +512,7 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Package</Label>
+                <Label>{t.students.package}</Label>
                 <Select name="packageId" defaultValue={student.package?.id ?? ""}>
                   <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
                   <SelectContent>
@@ -519,7 +521,7 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Discount Type</Label>
+                <Label>{t.students.discountType}</Label>
                 <Select name="discountTypeId" defaultValue={student.discountType?.id ?? ""}>
                   <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
                   <SelectContent>
@@ -529,7 +531,7 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Progress Stage</Label>
+              <Label>{t.students.progressStage}</Label>
               <Select name="progressStageId" defaultValue={student.progressStage?.id ?? ""}>
                 <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
                 <SelectContent>
@@ -540,24 +542,24 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Currency</Label>
+                  <Label>{t.students.currency}</Label>
                   <Select value={editPriceCurrency} onValueChange={setEditPriceCurrency}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="UZS">UZS (Uzbek Sum)</SelectItem>
-                      <SelectItem value="TL">TL (Turkish Lira)</SelectItem>
+                      <SelectItem value="UZS">{t.students.uzs}</SelectItem>
+                      <SelectItem value="TL">{t.students.tl}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-price">{editPriceCurrency === "TL" ? "Amount in TL" : "Price Charged (UZS)"}</Label>
+                  <Label htmlFor="edit-price">{editPriceCurrency === "TL" ? t.students.tl : t.students.price}</Label>
                   <Input id="edit-price" name="priceCharged" type="number" min={0}
                     defaultValue={editPriceCurrency === "TL" ? (student.priceOriginalAmount ?? "") : (student.priceCharged ?? "")} />
                 </div>
               </div>
               {editPriceCurrency === "TL" && (
                 <div className="space-y-2">
-                  <Label htmlFor="edit-priceUZS">UZS Equivalent</Label>
+                  <Label htmlFor="edit-priceUZS">{t.students.uzsEquivalent}</Label>
                   <Input id="edit-priceUZS" name="priceChargedUZS" type="number" min={0}
                     defaultValue={student.priceCharged ?? ""} />
                 </div>
@@ -565,7 +567,7 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Final Result</Label>
+                <Label>{t.students.result}</Label>
                 <Select name="finalResult" defaultValue={student.finalResult}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -575,7 +577,7 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Scholarships</Label>
+              <Label>{t.students.scholarships}</Label>
               <div className="flex flex-wrap gap-2">
                 {scholarships.map((s) => (
                   <label key={s.id} className="flex items-center gap-1.5 text-sm cursor-pointer">
@@ -592,7 +594,7 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-docs">Document Links (one per line)</Label>
+              <Label htmlFor="edit-docs">{t.batches.documentLinks}</Label>
               <Textarea
                 id="edit-docs"
                 name="documentLinks"
@@ -602,12 +604,12 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-notes">Notes</Label>
+              <Label htmlFor="edit-notes">{t.common.notes}</Label>
               <Textarea id="edit-notes" name="notes" rows={3} defaultValue={student.notes ?? ""} />
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save Changes"}</Button>
+              <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>{t.common.cancel}</Button>
+              <Button type="submit" disabled={saving}>{saving ? t.common.loading : t.common.saveChanges}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

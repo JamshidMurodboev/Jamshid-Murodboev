@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { AttendanceTable } from "./attendance-table";
-import { UZ } from "@/constants/uz";
+import { useLanguage } from "@/context/lang-context";
 
 interface Batch {
   id: string;
@@ -21,6 +21,7 @@ export function AttendanceClient({ isAdmin, initialBatchId }: AttendanceClientPr
   const [batches, setBatches] = useState<Batch[]>([]);
   const [selectedId, setSelectedId] = useState<string>(initialBatchId ?? "");
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetch("/api/batches")
@@ -40,7 +41,7 @@ export function AttendanceClient({ isAdmin, initialBatchId }: AttendanceClientPr
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">{UZ.attendance.title}</h1>
+        <h1 className="text-2xl font-bold">{t.attendance.title}</h1>
         {!loading && batches.length > 0 && (
           <select
             value={selectedId}
@@ -49,7 +50,7 @@ export function AttendanceClient({ isAdmin, initialBatchId }: AttendanceClientPr
           >
             {batches.map((b) => (
               <option key={b.id} value={b.id}>
-                {b.name} {b.status === "CLOSED" ? "(yopilgan)" : ""}
+                {b.name} {b.status === "CLOSED" ? `(${t.batches.closeBatch.toLowerCase()})` : ""}
               </option>
             ))}
           </select>
@@ -57,11 +58,11 @@ export function AttendanceClient({ isAdmin, initialBatchId }: AttendanceClientPr
       </div>
 
       {loading && (
-        <div className="text-sm text-muted-foreground">Yuklanmoqda…</div>
+        <div className="text-sm text-muted-foreground">{t.common.loading}</div>
       )}
 
       {!loading && batches.length === 0 && (
-        <div className="text-sm text-muted-foreground">Guruhlar topilmadi.</div>
+        <div className="text-sm text-muted-foreground">{t.batches.noBatches}</div>
       )}
 
       {!loading && selected && (

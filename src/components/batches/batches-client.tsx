@@ -16,6 +16,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Users, ChevronRight, Pencil } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { useLanguage } from "@/context/lang-context";
 
 interface Scholarship { id: string; name: string; shortCode: string }
 interface Batch {
@@ -32,6 +33,7 @@ interface Batch {
 
 export function BatchesClient() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [batches, setBatches] = useState<Batch[]>([]);
   const [allScholarships, setAllScholarships] = useState<Scholarship[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,9 +71,9 @@ export function BatchesClient() {
       const batch = await res.json();
       setBatches((prev) => [batch, ...prev]);
       setOpen(false);
-      toast({ title: "Batch created" });
+      toast({ title: t.batches.newBatch });
     } catch {
-      toast({ title: "Error", description: "Failed to create batch", variant: "destructive" });
+      toast({ title: t.common.error, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -100,9 +102,9 @@ export function BatchesClient() {
       const updated = await res.json();
       setBatches((prev) => prev.map((b) => b.id === editingBatch.id ? { ...b, ...updated } : b));
       setEditOpen(false);
-      toast({ title: "Batch updated" });
+      toast({ title: t.common.updated });
     } catch {
-      toast({ title: "Error", description: "Failed to update batch", variant: "destructive" });
+      toast({ title: t.common.error, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -115,21 +117,21 @@ export function BatchesClient() {
     setEditOpen(true);
   }
 
-  if (loading) return <div className="text-muted-foreground">Loading…</div>;
+  if (loading) return <div className="text-muted-foreground">{t.common.loading}</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Batches</h1>
+        <h1 className="text-2xl font-bold">{t.batches.title}</h1>
         <Button onClick={() => setOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> New Batch
+          <Plus className="mr-2 h-4 w-4" /> {t.batches.newBatch}
         </Button>
       </div>
 
       {batches.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            No batches yet. Create your first batch to get started.
+            {t.batches.noBatches}
           </CardContent>
         </Card>
       ) : (
@@ -142,7 +144,7 @@ export function BatchesClient() {
                     <div className="flex items-start justify-between gap-2">
                       <CardTitle className="text-base pr-8">{batch.name}</CardTitle>
                       <Badge variant={batch.status === "ACTIVE" ? "default" : "secondary"}>
-                        {batch.status}
+                        {batch.status === "ACTIVE" ? t.common.active : t.batches.closeBatch}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -161,7 +163,7 @@ export function BatchesClient() {
                     <div className="flex items-center justify-between pt-1 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Users className="h-3.5 w-3.5" />
-                        {batch._count?.students ?? 0} students
+                        {batch._count?.students ?? 0} {t.dashboard.students}
                       </span>
                       <ChevronRight className="h-4 w-4" />
                     </div>
@@ -184,30 +186,30 @@ export function BatchesClient() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>New Batch</DialogTitle>
+            <DialogTitle>{t.batches.newBatch}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{t.common.name}</Label>
               <Input id="name" name="name" placeholder="e.g. September 2026 SH+TB" required />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startDate">Start Date</Label>
+                <Label htmlFor="startDate">{t.batches.startDate}</Label>
                 <Input id="startDate" name="startDate" type="date" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endDate">End Date</Label>
+                <Label htmlFor="endDate">{t.batches.endDate}</Label>
                 <Input id="endDate" name="endDate" type="date" />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+              <Label htmlFor="notes">{t.common.notes}</Label>
               <Textarea id="notes" name="notes" rows={3} />
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={saving}>{saving ? "Creating…" : "Create"}</Button>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t.common.cancel}</Button>
+              <Button type="submit" disabled={saving}>{saving ? t.common.loading : t.common.add}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -217,38 +219,38 @@ export function BatchesClient() {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Batch</DialogTitle>
+            <DialogTitle>{t.batches.editBatch}</DialogTitle>
           </DialogHeader>
           {editingBatch && (
             <form onSubmit={handleEdit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-name">Name</Label>
+                <Label htmlFor="edit-name">{t.common.name}</Label>
                 <Input id="edit-name" name="name" defaultValue={editingBatch.name} required />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-startDate">Start Date</Label>
+                  <Label htmlFor="edit-startDate">{t.batches.startDate}</Label>
                   <Input id="edit-startDate" name="startDate" type="date"
                     defaultValue={editingBatch.startDate?.slice(0, 10)} required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-endDate">End Date</Label>
+                  <Label htmlFor="edit-endDate">{t.batches.endDate}</Label>
                   <Input id="edit-endDate" name="endDate" type="date"
                     defaultValue={editingBatch.endDate?.slice(0, 10) ?? ""} />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Status</Label>
+                <Label>{t.common.status}</Label>
                 <Select name="status" defaultValue={editingBatch.status}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ACTIVE">Active</SelectItem>
-                    <SelectItem value="CLOSED">Closed</SelectItem>
+                    <SelectItem value="ACTIVE">{t.common.active}</SelectItem>
+                    <SelectItem value="CLOSED">{t.batches.closeBatch}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Scholarships</Label>
+                <Label>{t.settings.scholarships}</Label>
                 <div className="flex flex-wrap gap-2">
                   {allScholarships.map((s) => (
                     <label key={s.id} className="flex items-center gap-1.5 text-sm cursor-pointer">
@@ -265,12 +267,12 @@ export function BatchesClient() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-notes">Notes</Label>
+                <Label htmlFor="edit-notes">{t.common.notes}</Label>
                 <Textarea id="edit-notes" name="notes" rows={3} defaultValue={editingBatch.notes ?? ""} />
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-                <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save Changes"}</Button>
+                <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>{t.common.cancel}</Button>
+                <Button type="submit" disabled={saving}>{saving ? t.common.loading : t.common.save}</Button>
               </DialogFooter>
             </form>
           )}

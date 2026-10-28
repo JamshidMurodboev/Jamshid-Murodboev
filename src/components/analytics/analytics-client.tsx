@@ -9,6 +9,7 @@ import {
 } from "recharts";
 import { formatCurrency } from "@/lib/utils";
 import { TrendingUp, DollarSign, AlertTriangle, Users, Percent } from "lucide-react";
+import { useLanguage } from "@/context/lang-context";
 
 interface AnalyticsData {
   totalDue: number;
@@ -98,6 +99,7 @@ function KPICard({ icon, label, value, sub, color }: {
 export function AnalyticsClient() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetch("/api/analytics")
@@ -107,60 +109,56 @@ export function AnalyticsClient() {
   }, []);
 
   if (loading) return <AnalyticsSkeleton />;
-  if (!data) return <div className="text-muted-foreground">Failed to load analytics.</div>;
+  if (!data) return <div className="text-muted-foreground">{t.analytics.loadError}</div>;
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Analytics</h1>
+      <h1 className="text-2xl font-bold">{t.analytics.title}</h1>
 
-      {/* KPI Row */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <KPICard
           icon={<DollarSign className="h-4 w-4" />}
-          label="Total Collected"
+          label={t.dashboard.revenueCollected}
           value={formatCurrency(data.totalPaid)}
           sub={`of ${formatCurrency(data.totalDue)} due`}
           color="green"
         />
         <KPICard
           icon={<Percent className="h-4 w-4" />}
-          label="Collection Rate"
+          label={t.dashboard.rate}
           value={`${data.collectionRate}%`}
-          sub="payments collected"
+          sub={t.dashboard.collected}
           color="blue"
         />
         <KPICard
           icon={<TrendingUp className="h-4 w-4" />}
-          label="Outstanding"
+          label={t.dashboard.outstanding}
           value={formatCurrency(data.totalOutstanding)}
-          sub="yet to be paid"
+          sub={t.dashboard.paymentsDue}
           color="amber"
         />
         <KPICard
           icon={<AlertTriangle className="h-4 w-4" />}
-          label="Overdue Payments"
+          label={t.payments.overdue}
           value={data.overdueCount.toString()}
-          sub="require attention"
           color="red"
         />
         <KPICard
           icon={<Users className="h-4 w-4" />}
-          label="Active Students"
+          label={t.dashboard.totalStudents}
           value={data.totalStudents.toString()}
-          sub="not archived"
           color="purple"
         />
       </div>
 
-      {/* Revenue by Batch + Students by Stage */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Revenue by Batch</CardTitle>
+            <CardTitle className="text-base">{t.analytics.revenueByBatch}</CardTitle>
           </CardHeader>
           <CardContent>
             {data.revenueByBatch.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">No payment data yet.</p>
+              <p className="text-sm text-muted-foreground py-8 text-center">{t.analytics.noPayment}</p>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={data.revenueByBatch} layout="vertical" margin={{ left: 8, right: 16, top: 4, bottom: 4 }}>
@@ -169,8 +167,8 @@ export function AnalyticsClient() {
                   <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                   <RechartTooltip content={<ChartTooltip />} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="paid" name="Paid" fill="#22c55e" radius={[0, 3, 3, 0]} maxBarSize={18} />
-                  <Bar dataKey="due" name="Total Due" fill="#3b82f6" radius={[0, 3, 3, 0]} maxBarSize={18} />
+                  <Bar dataKey="paid" name={t.payments.paid} fill="#22c55e" radius={[0, 3, 3, 0]} maxBarSize={18} />
+                  <Bar dataKey="due" name={t.payments.amountDue} fill="#3b82f6" radius={[0, 3, 3, 0]} maxBarSize={18} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -179,11 +177,11 @@ export function AnalyticsClient() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Students by Progress Stage</CardTitle>
+            <CardTitle className="text-base">{t.analytics.studentsByStage}</CardTitle>
           </CardHeader>
           <CardContent>
             {data.studentsByStage.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">No stage data yet.</p>
+              <p className="text-sm text-muted-foreground py-8 text-center">{t.analytics.noStage}</p>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={data.studentsByStage} layout="vertical" margin={{ left: 8, right: 16, top: 4, bottom: 4 }}>
@@ -191,7 +189,7 @@ export function AnalyticsClient() {
                   <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                   <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                   <RechartTooltip content={<CountTooltip />} />
-                  <Bar dataKey="count" name="Students" fill="#a855f7" radius={[0, 3, 3, 0]} maxBarSize={18} />
+                  <Bar dataKey="count" name={t.dashboard.students} fill="#a855f7" radius={[0, 3, 3, 0]} maxBarSize={18} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -199,14 +197,13 @@ export function AnalyticsClient() {
         </Card>
       </div>
 
-      {/* Monthly Trend */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Monthly Revenue Trend</CardTitle>
+          <CardTitle className="text-base">{t.analytics.monthlyRevenue}</CardTitle>
         </CardHeader>
         <CardContent>
           {data.revenueByMonth.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-12 text-center">No monthly data yet.</p>
+            <p className="text-sm text-muted-foreground py-12 text-center">{t.analytics.noMonthly}</p>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={data.revenueByMonth} margin={{ left: 0, right: 8, top: 8, bottom: 4 }}>
@@ -225,45 +222,37 @@ export function AnalyticsClient() {
                 <YAxis tickFormatter={fmtCompact} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                 <RechartTooltip content={<ChartTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Area type="monotone" dataKey="due" name="Due" stroke="#3b82f6" fill="url(#colorDue)" strokeWidth={2} dot={false} />
-                <Area type="monotone" dataKey="paid" name="Paid" stroke="#22c55e" fill="url(#colorPaid)" strokeWidth={2} dot={false} />
+                <Area type="monotone" dataKey="due" name={t.payments.amountDue} stroke="#3b82f6" fill="url(#colorDue)" strokeWidth={2} dot={false} />
+                <Area type="monotone" dataKey="paid" name={t.payments.paid} stroke="#22c55e" fill="url(#colorPaid)" strokeWidth={2} dot={false} />
               </AreaChart>
             </ResponsiveContainer>
           )}
         </CardContent>
       </Card>
 
-      {/* Revenue by Package + Payment Status */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Revenue by Package</CardTitle>
+            <CardTitle className="text-base">{t.analytics.revenueByPackage}</CardTitle>
           </CardHeader>
           <CardContent>
             {data.revenueByPackage.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">No package data yet.</p>
+              <p className="text-sm text-muted-foreground py-8 text-center">{t.analytics.noPackage}</p>
             ) : (
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie
                     data={data.revenueByPackage}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={80}
-                    paddingAngle={3}
-                    dataKey="value"
-                    nameKey="name"
+                    cx="50%" cy="50%"
+                    innerRadius={55} outerRadius={80}
+                    paddingAngle={3} dataKey="value" nameKey="name"
                   >
                     {data.revenueByPackage.map((_, i) => (
                       <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                     ))}
                   </Pie>
                   <RechartTooltip formatter={(v) => formatCurrency(Number(v))} />
-                  <Legend
-                    formatter={(v) => <span className="text-xs">{v}</span>}
-                    wrapperStyle={{ fontSize: 11 }}
-                  />
+                  <Legend formatter={(v) => <span className="text-xs">{v}</span>} wrapperStyle={{ fontSize: 11 }} />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -272,33 +261,26 @@ export function AnalyticsClient() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Payment Status Breakdown</CardTitle>
+            <CardTitle className="text-base">{t.analytics.paymentStatus}</CardTitle>
           </CardHeader>
           <CardContent>
             {data.paymentStatus.every((d) => d.value === 0) ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">No payments yet.</p>
+              <p className="text-sm text-muted-foreground py-8 text-center">{t.analytics.noPayment}</p>
             ) : (
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie
                     data={data.paymentStatus.filter((d) => d.value > 0)}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={80}
-                    paddingAngle={3}
-                    dataKey="value"
-                    nameKey="name"
+                    cx="50%" cy="50%"
+                    innerRadius={55} outerRadius={80}
+                    paddingAngle={3} dataKey="value" nameKey="name"
                   >
                     {data.paymentStatus.filter((d) => d.value > 0).map((entry, i) => (
                       <Cell key={i} fill={STATUS_COLORS[entry.name] ?? PIE_COLORS[i]} />
                     ))}
                   </Pie>
                   <RechartTooltip />
-                  <Legend
-                    formatter={(v) => <span className="text-xs">{v}</span>}
-                    wrapperStyle={{ fontSize: 11 }}
-                  />
+                  <Legend formatter={(v) => <span className="text-xs">{v}</span>} wrapperStyle={{ fontSize: 11 }} />
                 </PieChart>
               </ResponsiveContainer>
             )}

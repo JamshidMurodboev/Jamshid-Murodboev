@@ -1,7 +1,7 @@
 import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
 import ExcelJS from "exceljs";
-import { UZ } from "@/constants/uz";
+import { TRANSLATIONS } from "@/constants/translations";
 
 export type MarkValue = "done" | "missed" | "excused" | null;
 
@@ -31,6 +31,7 @@ export interface ExportData {
   maxMissed: number;
   maxExcused: number;
   noteText?: string | null;
+  lang?: "uz" | "ru";
 }
 
 const ICON = { done: "✓", missed: "✕", excused: "!" } as const;
@@ -41,8 +42,8 @@ export function markLabel(v: MarkValue): string {
   return ICON[v];
 }
 
-function lessonTitle(l: ExportLesson): string {
-  return l.title ?? UZ.attendance.lessonDefault(l.number);
+function lessonTitle(l: ExportLesson, lang: "uz" | "ru" = "uz"): string {
+  return l.title ?? TRANSLATIONS[lang].attendance.lessonDefault(l.number);
 }
 
 function slugify(s: string) {
@@ -60,12 +61,14 @@ function todayStr() {
 
 export function exportCsv(data: ExportData) {
   const { lessons, students, marks } = data;
+  const lang = data.lang ?? "uz";
+  const ta = TRANSLATIONS[lang].attendance;
   const headers = [
-    UZ.attendance.colNum,
-    UZ.attendance.colName,
+    ta.colNum,
+    ta.colName,
     ...lessons.flatMap((l) => [
-      `${lessonTitle(l)} ${UZ.attendance.colAttendance}`,
-      `${lessonTitle(l)} ${UZ.attendance.colAssignment}`,
+      `${lessonTitle(l, lang)} ${ta.colAttendance}`,
+      `${lessonTitle(l, lang)} ${ta.colAssignment}`,
     ]),
   ];
 
@@ -100,6 +103,8 @@ const EXCEL_FILL: Record<string, ExcelJS.Fill> = {
 
 export async function exportExcel(data: ExportData) {
   const { lessons, students, marks } = data;
+  const lang = data.lang ?? "uz";
+  const ta = TRANSLATIONS[lang].attendance;
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet("Davomat");
 
@@ -110,7 +115,7 @@ export async function exportExcel(data: ExportData) {
   ];
 
   // Row 1: merged lesson headers
-  const headerRow1 = ws.addRow(["", "", ...lessons.flatMap((l) => [lessonTitle(l), ""])]);
+  const headerRow1 = ws.addRow(["", "", ...lessons.flatMap((l) => [lessonTitle(l, lang), ""])]);
   headerRow1.height = 20;
   lessons.forEach((_, i) => {
     const col = 3 + i * 2;
@@ -127,9 +132,9 @@ export async function exportExcel(data: ExportData) {
 
   // Row 2: sub-headers
   const headerRow2 = ws.addRow([
-    UZ.attendance.colNum,
-    UZ.attendance.colName,
-    ...lessons.flatMap(() => [UZ.attendance.colAttendance, UZ.attendance.colAssignment]),
+    ta.colNum,
+    ta.colName,
+    ...lessons.flatMap(() => [ta.colAttendance, ta.colAssignment]),
   ]);
   headerRow2.height = 18;
   headerRow2.eachCell((cell) => {
@@ -186,11 +191,11 @@ export async function exportExcel(data: ExportData) {
 
   // Legend
   ws.addRow([]);
-  ws.addRow(["", "✓ = " + UZ.attendance.legendDone]);
-  ws.addRow(["", "✕ = " + UZ.attendance.legendMissed]);
-  ws.addRow(["", "! = " + UZ.attendance.legendExcused]);
+  ws.addRow(["", "✓ = " + ta.legendDone]);
+  ws.addRow(["", "✕ = " + ta.legendMissed]);
+  ws.addRow(["", "! = " + ta.legendExcused]);
   ws.addRow([]);
-  const noteText = data.noteText ?? UZ.attendance.noteDefault(data.maxMissed, data.maxExcused);
+  const noteText = data.noteText ?? ta.noteDefault(data.maxMissed, data.maxExcused);
   ws.addRow(["", noteText]);
 
   const buf = await wb.xlsx.writeBuffer();

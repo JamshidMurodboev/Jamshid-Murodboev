@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Download, AlertTriangle } from "lucide-react";
-import { UZ } from "@/constants/uz";
+import { useLanguage } from "@/context/lang-context";
 import {
   exportCsv, exportExcel, exportPng, exportPdf,
   MarkValue, ExportLesson, ExportStudent, ExportMark,
@@ -64,6 +64,7 @@ function MarkCell({
   onClick: () => void; onKeyDown: (e: React.KeyboardEvent) => void;
   tabIndex: number; dataCell: string;
 }) {
+  const { t, lang } = useLanguage();
   const icon = value ? ICON[value] : null;
   const color = value ? ICON_COLOR[value] : null;
   const base = "inline-flex h-7 w-7 items-center justify-center rounded-md text-sm font-bold select-none transition-all";
@@ -80,7 +81,7 @@ function MarkCell({
         onKeyDown={isAdmin ? onKeyDown : undefined}
         tabIndex={isAdmin ? tabIndex : -1}
         data-cell={dataCell}
-        aria-label={value ? UZ.attendance[`mark${value.charAt(0).toUpperCase()}${value.slice(1)}` as "markDone"] : UZ.attendance.markEmpty}
+        aria-label={value ? t.attendance[`mark${value.charAt(0).toUpperCase()}${value.slice(1)}` as "markDone"] : t.attendance.markEmpty}
       >
         {icon ?? <span className="text-muted-foreground/30 text-xs">·</span>}
       </button>
@@ -97,6 +98,7 @@ function WarningList({
   marks: Map<string, MarkRecord>;
   maxMissed: number; maxExcused: number;
 }) {
+  const { t, lang } = useLanguage();
   interface Entry {
     student: Student;
     type: "missed" | "excused";
@@ -110,8 +112,8 @@ function WarningList({
     const excusedLessons: string[] = [];
     for (const l of lessons) {
       const m = marks.get(markKey(l.id, s.id));
-      if (m?.attendance === "missed" || m?.assignment === "missed") missedLessons.push(lessonTitle(l));
-      if (m?.attendance === "excused" || m?.assignment === "excused") excusedLessons.push(lessonTitle(l));
+      if (m?.attendance === "missed" || m?.assignment === "missed") missedLessons.push(lessonTitle(l, lang));
+      if (m?.attendance === "excused" || m?.assignment === "excused") excusedLessons.push(lessonTitle(l, lang));
     }
     const mc = missedLessons.length;
     const ec = excusedLessons.length;
@@ -129,15 +131,15 @@ function WarningList({
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-semibold">{UZ.attendance.warningSectionTitle}</h3>
+      <h3 className="text-sm font-semibold">{t.attendance.warningSectionTitle}</h3>
       <div className="rounded-md border overflow-hidden">
         <table className="text-sm w-full">
           <thead>
             <tr className="bg-amber-50 dark:bg-amber-950/20 border-b text-left">
               <th className="px-3 py-2 font-medium w-6">#</th>
-              <th className="px-3 py-2 font-medium">{UZ.attendance.warningColStudent}</th>
-              <th className="px-3 py-2 font-medium">{UZ.attendance.warningColType}</th>
-              <th className="px-3 py-2 font-medium">{UZ.attendance.warningColLessons}</th>
+              <th className="px-3 py-2 font-medium">{t.attendance.warningColStudent}</th>
+              <th className="px-3 py-2 font-medium">{t.attendance.warningColType}</th>
+              <th className="px-3 py-2 font-medium">{t.attendance.warningColLessons}</th>
             </tr>
           </thead>
           <tbody>
@@ -148,7 +150,7 @@ function WarningList({
                   {entry.student.fullName}
                   {entry.isExpel && (
                     <Badge variant="destructive" className="ml-2 text-xs px-1.5 py-0">
-                      {UZ.attendance.expelBadge}
+                      {t.attendance.expelBadge}
                     </Badge>
                   )}
                 </td>
@@ -180,7 +182,8 @@ function ExportLayout({
   marks: Map<string, MarkRecord>; batchName: string;
   maxMissed: number; maxExcused: number; noteText?: string | null;
 }) {
-  const note = noteText ?? UZ.attendance.noteDefault(maxMissed, maxExcused);
+  const { t, lang } = useLanguage();
+  const note = noteText ?? t.attendance.noteDefault(maxMissed, maxExcused);
   const HEADER_BG = "#4f5d3a";
   const HEADER_FG = "#ffffff";
 
@@ -197,7 +200,7 @@ function ExportLayout({
   return (
     <div style={{ width: 1920, background: "#faf7f2", color: "#1a1a1a", fontFamily: "'Segoe UI', Arial, sans-serif", padding: "40px 48px 32px", boxSizing: "border-box" }}>
       <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 22, fontWeight: 700, color: "#1a1a1a" }}>{UZ.attendance.title}</div>
+        <div style={{ fontSize: 22, fontWeight: 700, color: "#1a1a1a" }}>{t.attendance.title}</div>
         <div style={{ fontSize: 14, color: "#555", marginTop: 4 }}>{batchName}</div>
       </div>
       <div>
@@ -205,15 +208,15 @@ function ExportLayout({
           <thead>
             <tr>
               <th rowSpan={2} style={{ background: HEADER_BG, color: HEADER_FG, padding: "8px 10px", textAlign: "center", border: "1px solid rgba(255,255,255,0.15)", width: 36 }}>№</th>
-              <th rowSpan={2} style={{ background: HEADER_BG, color: HEADER_FG, padding: "8px 12px", textAlign: "left", border: "1px solid rgba(255,255,255,0.15)", minWidth: 180 }}>Ism Familiya</th>
+              <th rowSpan={2} style={{ background: HEADER_BG, color: HEADER_FG, padding: "8px 12px", textAlign: "left", border: "1px solid rgba(255,255,255,0.15)", minWidth: 180 }}>{t.attendance.colName}</th>
               {lessons.map((l) => (
-                <th key={l.id} colSpan={2} style={{ background: HEADER_BG, color: HEADER_FG, padding: "8px 4px", textAlign: "center", border: "1px solid rgba(255,255,255,0.15)" }}>{lessonTitle(l)}</th>
+                <th key={l.id} colSpan={2} style={{ background: HEADER_BG, color: HEADER_FG, padding: "8px 4px", textAlign: "center", border: "1px solid rgba(255,255,255,0.15)" }}>{lessonTitle(l, lang)}</th>
               ))}
             </tr>
             <tr>
               {lessons.map((l) => ([
-                <th key={`${l.id}-a`} style={{ background: HEADER_BG, color: HEADER_FG, padding: "5px 4px", textAlign: "center", fontSize: 11, border: "1px solid rgba(255,255,255,0.15)" }}>Davomat</th>,
-                <th key={`${l.id}-v`} style={{ background: HEADER_BG, color: HEADER_FG, padding: "5px 4px", textAlign: "center", fontSize: 11, border: "1px solid rgba(255,255,255,0.15)" }}>Vazifa</th>,
+                <th key={`${l.id}-a`} style={{ background: HEADER_BG, color: HEADER_FG, padding: "5px 4px", textAlign: "center", fontSize: 11, border: "1px solid rgba(255,255,255,0.15)" }}>{t.attendance.colAttendance}</th>,
+                <th key={`${l.id}-v`} style={{ background: HEADER_BG, color: HEADER_FG, padding: "5px 4px", textAlign: "center", fontSize: 11, border: "1px solid rgba(255,255,255,0.15)" }}>{t.attendance.colAssignment}</th>,
               ]))}
             </tr>
           </thead>
@@ -228,8 +231,8 @@ function ExportLayout({
                   <td style={{ textAlign: "center", padding: "6px", border: "1px solid #e5e5e5", color: "#666", fontSize: 12 }}>{i + 1}</td>
                   <td style={{ padding: "6px 10px", border: "1px solid #e5e5e5", fontWeight: 500 }}>
                     {s.fullName}
-                    {expel && <span style={{ marginLeft: 6, fontSize: 11, color: "#d64545", fontWeight: 700 }}>⚠ Chiqarilishi kerak</span>}
-                    {warn && <span style={{ marginLeft: 6, fontSize: 11, color: "#e0a526", fontWeight: 700 }}>! Ogohlantirish</span>}
+                    {expel && <span style={{ marginLeft: 6, fontSize: 11, color: "#d64545", fontWeight: 700 }}>⚠ {t.attendance.expelBadge}</span>}
+                    {warn && <span style={{ marginLeft: 6, fontSize: 11, color: "#e0a526", fontWeight: 700 }}>! {t.attendance.warningBadge}</span>}
                   </td>
                   {lessons.map((l) => {
                     const m = marks.get(markKey(l.id, s.id));
@@ -249,7 +252,7 @@ function ExportLayout({
           {(["done", "missed", "excused"] as const).map((v) => (
             <span key={v} style={{ display: "flex", alignItems: "center", gap: 5 }}>
               <span style={{ display: "inline-flex", width: 20, height: 20, alignItems: "center", justifyContent: "center", borderRadius: 4, background: `${ICON_COLOR[v]}20`, color: ICON_COLOR[v], fontWeight: 700, fontSize: 13, border: `1.5px solid ${ICON_COLOR[v]}50` }}>{ICON[v]}</span>
-              {v === "done" ? UZ.attendance.legendDone : v === "missed" ? UZ.attendance.legendMissed : UZ.attendance.legendExcused}
+              {v === "done" ? t.attendance.legendDone : v === "missed" ? t.attendance.legendMissed : t.attendance.legendExcused}
             </span>
           ))}
         </div>
@@ -267,13 +270,14 @@ function ExportWarningList({ students, lessons, marks, maxMissed, maxExcused }: 
   students: Student[]; lessons: Lesson[];
   marks: Map<string, MarkRecord>; maxMissed: number; maxExcused: number;
 }) {
+  const { t, lang } = useLanguage();
   const entries: { name: string; type: "missed" | "excused"; lessons: string[]; expel: boolean }[] = [];
   for (const s of students) {
     const ml: string[] = [], el: string[] = [];
     for (const l of lessons) {
       const m = marks.get(markKey(l.id, s.id));
-      if (m?.attendance === "missed" || m?.assignment === "missed") ml.push(lessonTitle(l));
-      if (m?.attendance === "excused" || m?.assignment === "excused") el.push(lessonTitle(l));
+      if (m?.attendance === "missed" || m?.assignment === "missed") ml.push(lessonTitle(l, lang));
+      if (m?.attendance === "excused" || m?.assignment === "excused") el.push(lessonTitle(l, lang));
     }
     if (ml.length > 0) entries.push({ name: s.fullName, type: "missed", lessons: ml, expel: ml.length >= maxMissed });
     if (el.length > 0) entries.push({ name: s.fullName, type: "excused", lessons: el, expel: el.length >= maxExcused });
@@ -281,14 +285,14 @@ function ExportWarningList({ students, lessons, marks, maxMissed, maxExcused }: 
   if (entries.length === 0) return null;
   return (
     <div style={{ marginTop: 12 }}>
-      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, color: "#1a1a1a", marginTop: 12 }}>{UZ.attendance.warningSectionTitle}</div>
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, color: "#1a1a1a", marginTop: 12 }}>{t.attendance.warningSectionTitle}</div>
       <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 12 }}>
         <thead>
           <tr style={{ background: "#FFFBEB" }}>
             <th style={{ border: "1px solid #e5e5e5", padding: "4px 8px", textAlign: "center", width: 28 }}>#</th>
-            <th style={{ border: "1px solid #e5e5e5", padding: "4px 10px", textAlign: "left", minWidth: 160 }}>{UZ.attendance.warningColStudent}</th>
-            <th style={{ border: "1px solid #e5e5e5", padding: "4px 8px", textAlign: "center", width: 40 }}>{UZ.attendance.warningColType}</th>
-            <th style={{ border: "1px solid #e5e5e5", padding: "4px 10px", textAlign: "left" }}>{UZ.attendance.warningColLessons}</th>
+            <th style={{ border: "1px solid #e5e5e5", padding: "4px 10px", textAlign: "left", minWidth: 160 }}>{t.attendance.warningColStudent}</th>
+            <th style={{ border: "1px solid #e5e5e5", padding: "4px 8px", textAlign: "center", width: 40 }}>{t.attendance.warningColType}</th>
+            <th style={{ border: "1px solid #e5e5e5", padding: "4px 10px", textAlign: "left" }}>{t.attendance.warningColLessons}</th>
           </tr>
         </thead>
         <tbody>
@@ -326,6 +330,7 @@ export function AttendanceTable({
   maxMissed = 3, maxExcused = 4, noteText,
 }: Props) {
   const { toast } = useToast();
+  const { t, lang } = useLanguage();
 
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -381,7 +386,7 @@ export function AttendanceTable({
       }
       setMarks(map);
     } catch {
-      toast({ title: UZ.attendance.loadError, variant: "destructive" });
+      toast({ title: t.attendance.loadError, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -402,7 +407,7 @@ export function AttendanceTable({
       const lesson = await res.json();
       setLessons((prev) => [...prev, lesson]);
     } catch {
-      toast({ title: UZ.attendance.saveError, variant: "destructive" });
+      toast({ title: t.attendance.saveError, variant: "destructive" });
     }
   }
 
@@ -421,7 +426,7 @@ export function AttendanceTable({
       setLessons((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
       setEditLesson(null);
     } catch {
-      toast({ title: UZ.attendance.saveError, variant: "destructive" });
+      toast({ title: t.attendance.saveError, variant: "destructive" });
     }
   }
 
@@ -433,7 +438,7 @@ export function AttendanceTable({
       setLessons((prev) => prev.filter((l) => l.id !== id));
       setDeleteLessonId(null);
     } catch {
-      toast({ title: UZ.attendance.saveError, variant: "destructive" });
+      toast({ title: t.attendance.saveError, variant: "destructive" });
     }
   }
 
@@ -448,7 +453,7 @@ export function AttendanceTable({
     setMarkDialog({
       lessonId, studentId, field,
       studentName: student?.fullName ?? "",
-      lessonName: `${lessonTitle(lesson ?? { id: "", number: 0, title: null, order: 0 })} — ${field === "attendance" ? UZ.attendance.colAttendance : UZ.attendance.colAssignment}`,
+      lessonName: `${lessonTitle(lesson ?? { id: "", number: 0, title: null, order: 0 }, lang)} — ${field === "attendance" ? t.attendance.colAttendance : t.attendance.colAssignment}`,
       selectedValue: currentValue,
     });
   }
@@ -500,7 +505,7 @@ export function AttendanceTable({
             return next;
           });
         });
-        toast({ title: UZ.attendance.saveError, variant: "destructive" });
+        toast({ title: t.attendance.saveError, variant: "destructive" });
       })
       .finally(() => {
         setPendingCells((p) => { const next = new Set(p); next.delete(cellKey); return next; });
@@ -560,7 +565,7 @@ export function AttendanceTable({
     const exportStudents: ExportStudent[] = students.map((s) => ({ id: s.id, fullName: s.fullName }));
     const exportMarks = new Map<string, ExportMark>();
     marks.forEach((v, k) => { exportMarks.set(k, v); });
-    return { batchName, lessons: exportLessons, students: exportStudents, marks: exportMarks, maxMissed, maxExcused, noteText };
+    return { batchName, lessons: exportLessons, students: exportStudents, marks: exportMarks, maxMissed, maxExcused, noteText, lang };
   }
 
   async function handleExport(type: "png" | "pdf" | "excel" | "csv") {
@@ -588,13 +593,13 @@ export function AttendanceTable({
         }
       }
     } catch {
-      toast({ title: UZ.attendance.saveError, variant: "destructive" });
+      toast({ title: t.attendance.saveError, variant: "destructive" });
     } finally {
       setExporting(false);
     }
   }
 
-  const note = noteText ?? UZ.attendance.noteDefault(maxMissed, maxExcused);
+  const note = noteText ?? t.attendance.noteDefault(maxMissed, maxExcused);
 
   if (loading) return <AttendanceSkeleton />;
 
@@ -603,27 +608,27 @@ export function AttendanceTable({
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h2 className="text-base font-semibold">{UZ.attendance.title}</h2>
+          <h2 className="text-base font-semibold">{t.attendance.title}</h2>
           <p className="text-sm text-muted-foreground">{batchName}</p>
         </div>
         <div className="flex items-center gap-2">
           {isAdmin && (
             <Button size="sm" variant="outline" onClick={addLesson}>
-              <Plus className="mr-1.5 h-3.5 w-3.5" />{UZ.attendance.addLesson}
+              <Plus className="mr-1.5 h-3.5 w-3.5" />{t.attendance.addLesson}
             </Button>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" variant="outline" disabled={exporting || students.length === 0}>
                 <Download className="mr-1.5 h-3.5 w-3.5" />
-                {exporting ? UZ.attendance.exporting : UZ.attendance.exportMenu}
+                {exporting ? t.attendance.exporting : t.attendance.exportMenu}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleExport("png")}>{UZ.attendance.exportPng}</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport("pdf")}>{UZ.attendance.exportPdf}</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport("excel")}>{UZ.attendance.exportExcel}</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport("csv")}>{UZ.attendance.exportCsv}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("png")}>{t.attendance.exportPng}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("pdf")}>{t.attendance.exportPdf}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("excel")}>{t.attendance.exportExcel}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("csv")}>{t.attendance.exportCsv}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -631,10 +636,10 @@ export function AttendanceTable({
 
       {lessons.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-          <p className="text-sm text-muted-foreground">{UZ.attendance.noLessons}</p>
+          <p className="text-sm text-muted-foreground">{t.attendance.noLessons}</p>
           {isAdmin && (
             <Button size="sm" variant="outline" className="mt-4" onClick={addLesson}>
-              <Plus className="mr-1.5 h-3.5 w-3.5" />{UZ.attendance.addLesson}
+              <Plus className="mr-1.5 h-3.5 w-3.5" />{t.attendance.addLesson}
             </Button>
           )}
         </div>
@@ -646,15 +651,15 @@ export function AttendanceTable({
               <thead>
                 <tr>
                   <th rowSpan={2} className="sticky left-0 z-20 bg-[#4f5d3a] text-white border border-white/20 text-center px-2 py-2" style={{ minWidth: 36 }}>
-                    {UZ.attendance.colNum}
+                    {t.attendance.colNum}
                   </th>
                   <th rowSpan={2} className="sticky left-9 z-20 bg-[#4f5d3a] text-white border border-white/20 text-left px-3 py-2" style={{ minWidth: 160 }}>
-                    {UZ.attendance.colName}
+                    {t.attendance.colName}
                   </th>
                   {lessons.map((l) => (
                     <th key={l.id} colSpan={2} className="bg-[#4f5d3a] text-white border border-white/20 text-center px-2 py-2 whitespace-nowrap">
                       <div className="flex items-center justify-center gap-1">
-                        <span>{lessonTitle(l)}</span>
+                        <span>{lessonTitle(l, lang)}</span>
                         {isAdmin && (
                           <div className="flex gap-0.5 ml-1">
                             <button type="button" className="rounded p-0.5 hover:bg-white/20 transition-colors" onClick={() => { setEditLesson(l); setEditTitle(l.title ?? ""); }}>
@@ -671,8 +676,8 @@ export function AttendanceTable({
                 </tr>
                 <tr>
                   {lessons.map((l) => ([
-                    <th key={`${l.id}-a`} className="bg-[#4f5d3a] text-white border border-white/20 text-center px-1 py-1 text-xs font-normal" style={{ minWidth: 40 }}>{UZ.attendance.colAttendance}</th>,
-                    <th key={`${l.id}-v`} className="bg-[#4f5d3a] text-white border border-white/20 text-center px-1 py-1 text-xs font-normal" style={{ minWidth: 40 }}>{UZ.attendance.colAssignment}</th>,
+                    <th key={`${l.id}-a`} className="bg-[#4f5d3a] text-white border border-white/20 text-center px-1 py-1 text-xs font-normal" style={{ minWidth: 40 }}>{t.attendance.colAttendance}</th>,
+                    <th key={`${l.id}-v`} className="bg-[#4f5d3a] text-white border border-white/20 text-center px-1 py-1 text-xs font-normal" style={{ minWidth: 40 }}>{t.attendance.colAssignment}</th>,
                   ]))}
                 </tr>
               </thead>
@@ -689,12 +694,12 @@ export function AttendanceTable({
                           {s.fullName}
                           {expel && (
                             <Badge variant="destructive" className="text-xs px-1.5 py-0 shrink-0">
-                              <AlertTriangle className="h-3 w-3 mr-1" />{UZ.attendance.expelBadge}
+                              <AlertTriangle className="h-3 w-3 mr-1" />{t.attendance.expelBadge}
                             </Badge>
                           )}
                           {warn && (
                             <Badge className="text-xs px-1.5 py-0 shrink-0 bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-300">
-                              <AlertTriangle className="h-3 w-3 mr-1" />{UZ.attendance.warningBadge}
+                              <AlertTriangle className="h-3 w-3 mr-1" />{t.attendance.warningBadge}
                             </Badge>
                           )}
                         </div>
@@ -739,7 +744,7 @@ export function AttendanceTable({
                   {ICON[v]}
                 </span>
                 <span className="text-muted-foreground">
-                  {v === "done" ? UZ.attendance.legendDone : v === "missed" ? UZ.attendance.legendMissed : UZ.attendance.legendExcused}
+                  {v === "done" ? t.attendance.legendDone : v === "missed" ? t.attendance.legendMissed : t.attendance.legendExcused}
                 </span>
               </span>
             ))}
@@ -776,7 +781,7 @@ export function AttendanceTable({
       <Dialog open={!!markDialog} onOpenChange={(o) => !o && setMarkDialog(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>{UZ.attendance.confirmTitle}</DialogTitle>
+            <DialogTitle>{t.attendance.confirmTitle}</DialogTitle>
             {markDialog && (
               <p className="text-sm text-muted-foreground pt-1">
                 <span className="font-medium text-foreground">{markDialog.studentName}</span>
@@ -786,10 +791,10 @@ export function AttendanceTable({
           </DialogHeader>
           <div className="grid grid-cols-2 gap-2 py-2">
             {([
-              { value: "done" as MarkValue, label: UZ.attendance.markDone, color: "#3aa655" },
-              { value: "missed" as MarkValue, label: UZ.attendance.markMissed, color: "#d64545" },
-              { value: "excused" as MarkValue, label: UZ.attendance.markExcused, color: "#e0a526" },
-              { value: null as MarkValue, label: UZ.attendance.markEmpty, color: "#888" },
+              { value: "done" as MarkValue, label: t.attendance.markDone, color: "#3aa655" },
+              { value: "missed" as MarkValue, label: t.attendance.markMissed, color: "#d64545" },
+              { value: "excused" as MarkValue, label: t.attendance.markExcused, color: "#e0a526" },
+              { value: null as MarkValue, label: t.attendance.markEmpty, color: "#888" },
             ] as { value: MarkValue; label: string; color: string }[]).map(({ value, label, color }) => {
               const selected = markDialog?.selectedValue === value;
               return (
@@ -810,8 +815,8 @@ export function AttendanceTable({
             })}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setMarkDialog(null)}>{UZ.attendance.cancel}</Button>
-            <Button onClick={applyMark}>{UZ.attendance.save}</Button>
+            <Button variant="outline" onClick={() => setMarkDialog(null)}>{t.attendance.cancel}</Button>
+            <Button onClick={applyMark}>{t.attendance.save}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -819,14 +824,14 @@ export function AttendanceTable({
       {/* Edit lesson dialog */}
       <Dialog open={!!editLesson} onOpenChange={(o) => !o && setEditLesson(null)}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>{UZ.attendance.editLesson}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t.attendance.editLesson}</DialogTitle></DialogHeader>
           <div className="space-y-2 py-2">
-            <Label htmlFor="lesson-title">{UZ.attendance.lessonTitle}</Label>
-            <Input id="lesson-title" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder={editLesson ? UZ.attendance.lessonDefault(editLesson.number) : ""} />
+            <Label htmlFor="lesson-title">{t.attendance.lessonTitle}</Label>
+            <Input id="lesson-title" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder={editLesson ? t.attendance.lessonDefault(editLesson.number) : ""} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditLesson(null)}>{UZ.attendance.cancel}</Button>
-            <Button onClick={saveLesson}>{UZ.attendance.save}</Button>
+            <Button variant="outline" onClick={() => setEditLesson(null)}>{t.attendance.cancel}</Button>
+            <Button onClick={saveLesson}>{t.attendance.save}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -835,13 +840,13 @@ export function AttendanceTable({
       <AlertDialog open={!!deleteLessonId} onOpenChange={(o) => !o && setDeleteLessonId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{UZ.attendance.deleteConfirm}</AlertDialogTitle>
+            <AlertDialogTitle>{t.attendance.deleteConfirm}</AlertDialogTitle>
             <AlertDialogDescription>Bu darsga tegishli barcha belgilar o&apos;chiriladi. Bu amalni bekor qilib bo&apos;lmaydi.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{UZ.attendance.cancel}</AlertDialogCancel>
+            <AlertDialogCancel>{t.attendance.cancel}</AlertDialogCancel>
             <AlertDialogAction onClick={() => deleteLessonId && deleteLesson(deleteLessonId)} className="bg-destructive text-destructive-foreground">
-              {UZ.attendance.delete}
+              {t.attendance.delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

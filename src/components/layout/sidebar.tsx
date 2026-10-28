@@ -7,16 +7,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/batches", label: "Batches", icon: BookOpen },
-  { href: "/students", label: "Students", icon: Users },
-  { href: "/attendance", label: "Attendance", icon: ClipboardList },
-  { href: "/payments", label: "Payments", icon: CreditCard },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
+import { useLanguage } from "@/context/lang-context";
 
 async function handleLogout() {
   await fetch("/api/auth/logout", { method: "POST" });
@@ -25,6 +16,18 @@ async function handleLogout() {
 
 function SidebarContent({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
+  const { t } = useLanguage();
+
+  const navItems = [
+    { href: "/dashboard", label: t.sidebar.dashboard, icon: LayoutDashboard },
+    { href: "/analytics", label: t.sidebar.analytics, icon: BarChart3 },
+    { href: "/batches", label: t.sidebar.batches, icon: BookOpen },
+    { href: "/students", label: t.sidebar.students, icon: Users },
+    { href: "/attendance", label: t.sidebar.attendance, icon: ClipboardList },
+    { href: "/payments", label: t.sidebar.payments, icon: CreditCard },
+    { href: "/settings", label: t.sidebar.settings, icon: Settings },
+  ];
+
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
@@ -33,8 +36,8 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
             <GraduationCap className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-sm font-semibold leading-none">Scholarship CRM</p>
-            <p className="text-xs text-sidebar-foreground/60 leading-none mt-0.5">Management System</p>
+            <p className="text-sm font-semibold leading-none">{t.sidebar.appName}</p>
+            <p className="text-xs text-sidebar-foreground/60 leading-none mt-0.5">{t.sidebar.appSub}</p>
           </div>
         </div>
         {onClose && (
@@ -71,7 +74,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
           onClick={handleLogout}
         >
           <LogOut className="h-4 w-4" />
-          Logout
+          {t.sidebar.logout}
         </Button>
       </div>
     </div>
@@ -84,12 +87,10 @@ export function Sidebar({ mobileOpen, onMobileClose }: {
 }) {
   return (
     <>
-      {/* Desktop sidebar */}
       <aside className="hidden w-60 shrink-0 md:block">
         <SidebarContent />
       </aside>
 
-      {/* Mobile overlay */}
       {mobileOpen && (
         <>
           <div

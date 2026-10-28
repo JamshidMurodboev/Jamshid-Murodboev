@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, GripVertical } from "lucide-react";
+import { useLanguage } from "@/context/lang-context";
 
 interface Scholarship { id: string; name: string; shortCode: string; active: boolean }
 interface DiscountType { id: string; name: string; discountValue: number; isPercentage: boolean; active: boolean }
@@ -23,6 +24,7 @@ interface AppUser { id: string; name: string; email: string; role: string; teleg
 export function SettingsClient({ role }: { role: string }) {
   const isAdmin = role === "ADMIN";
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const [scholarships, setScholarships] = useState<Scholarship[]>([]);
   const [discounts, setDiscounts] = useState<DiscountType[]>([]);
@@ -167,22 +169,22 @@ export function SettingsClient({ role }: { role: string }) {
   if (!isAdmin) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">Settings are available to admins only.</p>
+        <h1 className="text-2xl font-bold">{t.settings.title}</h1>
+        <p className="text-muted-foreground">{t.settings.adminOnly}</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Settings</h1>
+      <h1 className="text-2xl font-bold">{t.settings.title}</h1>
 
       <Tabs defaultValue="scholarships">
         <TabsList className="flex-wrap h-auto gap-1">
-          <TabsTrigger value="scholarships">Scholarships</TabsTrigger>
-          <TabsTrigger value="discounts">Discount Types</TabsTrigger>
-          <TabsTrigger value="stages">Progress Stages</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="scholarships">{t.settings.scholarships}</TabsTrigger>
+          <TabsTrigger value="discounts">{t.settings.discountTypes}</TabsTrigger>
+          <TabsTrigger value="stages">{t.settings.progressStages}</TabsTrigger>
+          <TabsTrigger value="users">{t.settings.users}</TabsTrigger>
           <TabsTrigger value="telegram">Telegram</TabsTrigger>
         </TabsList>
 
@@ -190,9 +192,9 @@ export function SettingsClient({ role }: { role: string }) {
         <TabsContent value="scholarships">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Scholarships</CardTitle>
+              <CardTitle className="text-base">{t.settings.scholarships}</CardTitle>
               <Button size="sm" onClick={() => { setEditingScholarship(null); setScholarshipOpen(true); }}>
-                <Plus className="mr-1 h-3.5 w-3.5" /> Add
+                <Plus className="mr-1 h-3.5 w-3.5" /> {t.common.add}
               </Button>
             </CardHeader>
             <CardContent>
@@ -202,7 +204,7 @@ export function SettingsClient({ role }: { role: string }) {
                     <div className="flex items-center gap-3">
                       <Badge variant="outline">{s.shortCode}</Badge>
                       <span className="text-sm">{s.name}</span>
-                      {!s.active && <Badge variant="secondary" className="text-xs">Inactive</Badge>}
+                      {!s.active && <Badge variant="secondary" className="text-xs">{t.common.inactive}</Badge>}
                     </div>
                     <div className="flex gap-1">
                       <Button size="icon" variant="ghost" className="h-7 w-7"
@@ -227,9 +229,9 @@ export function SettingsClient({ role }: { role: string }) {
         <TabsContent value="discounts">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Discount Types</CardTitle>
+              <CardTitle className="text-base">{t.settings.discountTypes}</CardTitle>
               <Button size="sm" onClick={() => { setEditingDiscount(null); setDiscountOpen(true); }}>
-                <Plus className="mr-1 h-3.5 w-3.5" /> Add
+                <Plus className="mr-1 h-3.5 w-3.5" /> {t.common.add}
               </Button>
             </CardHeader>
             <CardContent>
@@ -239,9 +241,9 @@ export function SettingsClient({ role }: { role: string }) {
                     <div>
                       <p className="text-sm font-medium">{d.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {d.discountValue}{d.isPercentage ? "%" : " UZS"} discount
+                        {d.discountValue}{d.isPercentage ? "%" : " UZS"} {t.payments.discount.toLowerCase()}
                       </p>
-                      {!d.active && <Badge variant="secondary" className="text-xs mt-1">Inactive</Badge>}
+                      {!d.active && <Badge variant="secondary" className="text-xs mt-1">{t.common.inactive}</Badge>}
                     </div>
                     <div className="flex gap-1">
                       <Button size="icon" variant="ghost" className="h-7 w-7"
@@ -266,9 +268,9 @@ export function SettingsClient({ role }: { role: string }) {
         <TabsContent value="stages">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Progress Stages</CardTitle>
+              <CardTitle className="text-base">{t.settings.progressStages}</CardTitle>
               <Button size="sm" onClick={() => { setEditingStage(null); setStageOpen(true); }}>
-                <Plus className="mr-1 h-3.5 w-3.5" /> Add
+                <Plus className="mr-1 h-3.5 w-3.5" /> {t.common.add}
               </Button>
             </CardHeader>
             <CardContent>
@@ -301,9 +303,9 @@ export function SettingsClient({ role }: { role: string }) {
         <TabsContent value="users">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Users</CardTitle>
+              <CardTitle className="text-base">{t.settings.users}</CardTitle>
               <Button size="sm" onClick={() => { setEditingUser(null); setUserOpen(true); }}>
-                <Plus className="mr-1 h-3.5 w-3.5" /> Add User
+                <Plus className="mr-1 h-3.5 w-3.5" /> {t.settings.addUser}
               </Button>
             </CardHeader>
             <CardContent>
@@ -347,7 +349,7 @@ export function SettingsClient({ role }: { role: string }) {
                 Each user&apos;s Telegram chat ID must be set in the Users tab for them to receive alerts.
               </p>
               <div className="flex items-center gap-3">
-                <Label htmlFor="alertDays">Alert days before due date</Label>
+                <Label htmlFor="alertDays">{t.settings.alertDays}</Label>
                 <Input
                   id="alertDays"
                   className="w-20"
@@ -358,7 +360,7 @@ export function SettingsClient({ role }: { role: string }) {
                   onChange={(e) => setAlertDays(e.target.value)}
                 />
               </div>
-              <Button onClick={saveAlertDays}>Save</Button>
+              <Button onClick={saveAlertDays}>{t.common.save}</Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -367,19 +369,19 @@ export function SettingsClient({ role }: { role: string }) {
       {/* Scholarship Dialog */}
       <Dialog open={scholarshipOpen} onOpenChange={(o) => { setScholarshipOpen(o); if (!o) setEditingScholarship(null); }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{editingScholarship ? "Edit Scholarship" : "Add Scholarship"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingScholarship ? t.settings.scholarships : t.settings.addScholarship}</DialogTitle></DialogHeader>
           <form onSubmit={handleScholarship} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="s-name">Name</Label>
+              <Label htmlFor="s-name">{t.common.name}</Label>
               <Input id="s-name" name="name" defaultValue={editingScholarship?.name ?? ""} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="s-code">Short Code</Label>
+              <Label htmlFor="s-code">{t.settings.shortCode}</Label>
               <Input id="s-code" name="shortCode" maxLength={6} defaultValue={editingScholarship?.shortCode ?? ""} required />
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setScholarshipOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
+              <Button type="button" variant="outline" onClick={() => setScholarshipOpen(false)}>{t.common.cancel}</Button>
+              <Button type="submit" disabled={saving}>{saving ? t.common.loading : t.common.save}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -388,35 +390,35 @@ export function SettingsClient({ role }: { role: string }) {
       {/* Discount Dialog */}
       <Dialog open={discountOpen} onOpenChange={(o) => { setDiscountOpen(o); if (!o) setEditingDiscount(null); }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{editingDiscount ? "Edit Discount Type" : "Add Discount Type"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingDiscount ? t.settings.discountTypes : t.settings.addDiscount}</DialogTitle></DialogHeader>
           <form onSubmit={handleDiscount} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="d-name">Name</Label>
+              <Label htmlFor="d-name">{t.common.name}</Label>
               <Input id="d-name" name="name" defaultValue={editingDiscount?.name ?? ""} required />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="d-value">Value</Label>
+                <Label htmlFor="d-value">{t.settings.discountValue}</Label>
                 <Input id="d-value" name="discountValue" type="number" min={0} defaultValue={editingDiscount?.discountValue ?? ""} required />
               </div>
               <div className="space-y-2">
-                <Label>Type</Label>
+                <Label>{t.common.status}</Label>
                 <Select name="isPercentage" defaultValue={editingDiscount ? (editingDiscount.isPercentage ? "true" : "false") : "true"}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="true">Percentage (%)</SelectItem>
-                    <SelectItem value="false">Fixed (UZS)</SelectItem>
+                    <SelectItem value="true">{t.payments.percentage}</SelectItem>
+                    <SelectItem value="false">{t.payments.fixed}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="d-desc">Description</Label>
+              <Label htmlFor="d-desc">{t.payments.description}</Label>
               <Input id="d-desc" name="description" defaultValue={""} />
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setDiscountOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
+              <Button type="button" variant="outline" onClick={() => setDiscountOpen(false)}>{t.common.cancel}</Button>
+              <Button type="submit" disabled={saving}>{saving ? t.common.loading : t.common.save}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -425,15 +427,15 @@ export function SettingsClient({ role }: { role: string }) {
       {/* Stage Dialog */}
       <Dialog open={stageOpen} onOpenChange={(o) => { setStageOpen(o); if (!o) setEditingStage(null); }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{editingStage ? "Edit Stage" : "Add Stage"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingStage ? t.settings.progressStages : t.settings.addStage}</DialogTitle></DialogHeader>
           <form onSubmit={handleStage} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="st-name">Stage Name</Label>
+              <Label htmlFor="st-name">{t.settings.stageName}</Label>
               <Input id="st-name" name="name" defaultValue={editingStage?.name ?? ""} required />
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setStageOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
+              <Button type="button" variant="outline" onClick={() => setStageOpen(false)}>{t.common.cancel}</Button>
+              <Button type="submit" disabled={saving}>{saving ? t.common.loading : t.common.save}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -442,37 +444,37 @@ export function SettingsClient({ role }: { role: string }) {
       {/* User Dialog */}
       <Dialog open={userOpen} onOpenChange={(o) => { setUserOpen(o); if (!o) setEditingUser(null); }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{editingUser ? "Edit User" : "Add User"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingUser ? t.settings.users : t.settings.addUser}</DialogTitle></DialogHeader>
           <form onSubmit={handleUser} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="u-name">Name</Label>
+              <Label htmlFor="u-name">{t.common.name}</Label>
               <Input id="u-name" name="name" defaultValue={editingUser?.name ?? ""} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="u-email">Email</Label>
+              <Label htmlFor="u-email">{t.auth.email}</Label>
               <Input id="u-email" name="email" type="email" defaultValue={editingUser?.email ?? ""} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="u-pass">{editingUser ? "New Password (leave blank to keep)" : "Password"}</Label>
+              <Label htmlFor="u-pass">{editingUser ? t.auth.password : t.auth.password}</Label>
               <Input id="u-pass" name="password" type="password" required={!editingUser} />
             </div>
             <div className="space-y-2">
-              <Label>Role</Label>
+              <Label>{t.settings.role}</Label>
               <Select name="role" defaultValue={editingUser?.role ?? "ASSISTANT"}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ADMIN">Admin</SelectItem>
-                  <SelectItem value="ASSISTANT">Assistant</SelectItem>
+                  <SelectItem value="ADMIN">{t.settings.admin}</SelectItem>
+                  <SelectItem value="ASSISTANT">{t.settings.assistant}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="u-tg">Telegram Chat ID</Label>
+              <Label htmlFor="u-tg">{t.settings.telegramChatId}</Label>
               <Input id="u-tg" name="telegramChatId" defaultValue={editingUser?.telegramChatId ?? ""} placeholder="123456789" />
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setUserOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
+              <Button type="button" variant="outline" onClick={() => setUserOpen(false)}>{t.common.cancel}</Button>
+              <Button type="submit" disabled={saving}>{saving ? t.common.loading : t.common.save}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/context/lang-context";
 
 export function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -29,7 +31,7 @@ export function LoginForm() {
 
       if (!res.ok) {
         const { error } = await res.json();
-        toast({ title: "Login failed", description: error, variant: "destructive" });
+        toast({ title: t.auth.loginFailed, description: error, variant: "destructive" });
       } else {
         router.push("/dashboard");
         router.refresh();
@@ -42,20 +44,20 @@ export function LoginForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Sign In</CardTitle>
+        <CardTitle>{t.auth.signIn}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t.auth.email}</Label>
             <Input id="email" name="email" type="email" required autoComplete="email" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t.auth.password}</Label>
             <Input id="password" name="password" type="password" required autoComplete="current-password" />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing in…" : "Sign In"}
+            {loading ? t.auth.signingIn : t.auth.signIn}
           </Button>
         </form>
       </CardContent>
