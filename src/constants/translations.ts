@@ -500,5 +500,6 @@ export const TRANSLATIONS = {
   },
 } as const;
 
-type StringValues<T> = { readonly [K in keyof T]: T[K] extends Record<string, unknown> ? StringValues<T[K]> : string };
-export type Translations = StringValues<typeof TRANSLATIONS["uz"]>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Loosen<T> = { readonly [K in keyof T]: T[K] extends (...args: any[]) => any ? T[K] : T[K] extends Record<string, unknown> ? Loosen<T[K]> : string };
+export type Translations = Loosen<typeof TRANSLATIONS["uz"]>;
