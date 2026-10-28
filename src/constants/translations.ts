@@ -500,4 +500,5 @@ export const TRANSLATIONS = {
   },
 } as const;
 
-export type Translations = typeof TRANSLATIONS["uz"];
+type StringValues<T> = { readonly [K in keyof T]: T[K] extends Record<string, unknown> ? StringValues<T[K]> : string };
+export type Translations = StringValues<typeof TRANSLATIONS["uz"]>;
