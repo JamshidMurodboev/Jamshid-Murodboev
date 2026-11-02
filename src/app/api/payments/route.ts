@@ -93,17 +93,22 @@ export async function POST(req: Request) {
     await requireSession();
     const data = await req.json();
 
+    const amountDue = parseFloat(data.amountDue);
+    const dueDate = new Date(data.dueDate);
+
     const payment = await db.payment.create({
       data: {
         studentId: data.studentId,
-        amountDue: parseFloat(data.amountDue),
-        dueDate: new Date(data.dueDate),
-        amountPaid: parseFloat(data.amountPaid ?? 0),
-        paidDate: data.paidDate ? new Date(data.paidDate) : null,
-        status: computeStatus(parseFloat(data.amountDue), parseFloat(data.amountPaid ?? 0), new Date(data.dueDate)),
+        amountDue,
+        dueDate,
+        amountPaid: 0,
+        status: computeStatus(amountDue, 0, dueDate),
         notes: data.notes ?? null,
       },
-      include: { student: { select: { id: true, fullName: true } } },
+      include: {
+        student: { select: { id: true, fullName: true } },
+        installments: true,
+      },
     });
     return NextResponse.json(payment, { status: 201 });
   } catch (err) {
@@ -112,7 +117,7 @@ export async function POST(req: Request) {
   }
 }
 
-function computeStatus(due: number, paid: number, dueDate: Date): "PAID" | "PENDING" | "OVERDUE" {
+export function computeStatus(due: number, paid: number, dueDate: Date): "PAID" | "PENDING" | "OVERDUE" {
   if (paid >= due) return "PAID";
   if (new Date() > dueDate) return "OVERDUE";
   return "PENDING";

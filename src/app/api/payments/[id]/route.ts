@@ -1,12 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
-
-function computeStatus(due: number, paid: number, dueDate: Date): "PAID" | "PENDING" | "OVERDUE" {
-  if (paid >= due) return "PAID";
-  if (new Date() > dueDate) return "OVERDUE";
-  return "PENDING";
-}
+import { computeStatus } from "../route";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -16,19 +11,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const existing = await db.payment.findUniqueOrThrow({ where: { id } });
     const amountDue = data.amountDue !== undefined ? parseFloat(data.amountDue) : existing.amountDue;
-    const amountPaid = data.amountPaid !== undefined ? parseFloat(data.amountPaid) : existing.amountPaid;
     const dueDate = data.dueDate ? new Date(data.dueDate) : existing.dueDate;
 
     const payment = await db.payment.update({
       where: { id },
       data: {
         amountDue,
-        amountPaid,
         dueDate,
-        paidDate: data.paidDate !== undefined ? (data.paidDate ? new Date(data.paidDate) : null) : existing.paidDate,
-        status: computeStatus(amountDue, amountPaid, dueDate),
+        status: computeStatus(amountDue, existing.amountPaid, dueDate),
         notes: data.notes !== undefined ? data.notes : existing.notes,
       },
+      include: { installments: { orderBy: { paidDate: "asc" } } },
     });
     return NextResponse.json(payment);
   } catch (err) {

@@ -14,7 +14,10 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
         progressStage: true,
         discountType: true,
         scholarships: { include: { scholarship: true } },
-        payments: { orderBy: { dueDate: "asc" } },
+        payments: {
+          orderBy: { dueDate: "asc" },
+          include: { installments: { orderBy: { paidDate: "asc" } } },
+        },
         createdBy: { select: { name: true } },
         updatedBy: { select: { name: true } },
       },
@@ -66,7 +69,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         progressStage: true,
         discountType: true,
         scholarships: { include: { scholarship: true } },
-        payments: { orderBy: { dueDate: "asc" } },
+        payments: {
+          orderBy: { dueDate: "asc" },
+          include: { installments: { orderBy: { paidDate: "asc" } } },
+        },
       },
     });
     return NextResponse.json(student);

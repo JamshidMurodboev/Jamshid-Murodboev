@@ -22,13 +22,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronLeft, Plus, Pencil, Trash2, GraduationCap, Phone, Calendar, X } from "lucide-react";
+import { ChevronLeft, Plus, Pencil, Trash2, GraduationCap, Phone, Calendar } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { useLanguage } from "@/context/lang-context";
 
+interface Installment {
+  id: string; amount: number; paidDate: string; notes?: string;
+}
 interface Payment {
   id: string; amountDue: number; amountPaid: number; dueDate: string;
   paidDate?: string; status: "PAID" | "PENDING" | "OVERDUE"; notes?: string;
+  installments: Installment[];
 }
 interface Student {
   id: string; fullName: string; phone?: string; dob?: string;
@@ -68,16 +72,12 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
   const [saving, setSaving] = useState(false);
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [editPriceCurrency, setEditPriceCurrency] = useState("UZS");
-
-  interface InstallmentRow {
-    amountDue: string;
-    dueDate: string;
-    amountPaid: string;
-    paidDate: string;
-    notes: string;
-  }
-  const emptyRow = (): InstallmentRow => ({ amountDue: "", dueDate: "", amountPaid: "0", paidDate: "", notes: "" });
-  const [installments, setInstallments] = useState<InstallmentRow[]>([emptyRow()]);
+  const [expandedPaymentId, setExpandedPaymentId] = useState<string | null>(null);
+  const [addInstOpen, setAddInstOpen] = useState(false);
+  const [addInstPaymentId, setAddInstPaymentId] = useState<string | null>(null);
+  const [instAmount, setInstAmount] = useState("");
+  const [instDate, setInstDate] = useState("");
+  const [instNotes, setInstNotes] = useState("");
 
   async function loadStudent() {
     const res = await fetch(`/api/students/${studentId}`);
@@ -145,40 +145,56 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
     }
   }
 
-  function updateInstallment(idx: number, field: keyof InstallmentRow, value: string) {
-    setInstallments((prev) => prev.map((row, i) => i === idx ? { ...row, [field]: value } : row));
-  }
-
   async function addPayment(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSaving(true);
+    const fd = new FormData(e.currentTarget);
     try {
-      await Promise.all(
-        installments.map((row) =>
-          fetch("/api/payments", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              studentId,
-              amountDue: row.amountDue,
-              dueDate: row.dueDate,
-              amountPaid: row.amountPaid || 0,
-              paidDate: row.paidDate || null,
-              notes: row.notes || null,
-            }),
-          })
-        )
-      );
+      await fetch("/api/payments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentId,
+          amountDue: fd.get("amountDue"),
+          dueDate: fd.get("dueDate"),
+          notes: fd.get("notes") || null,
+        }),
+      });
       await loadStudent();
       setPayOpen(false);
-      setEditingPayment(null);
-      setInstallments([emptyRow()]);
       toast({ title: t.common.saved });
     } catch {
       toast({ title: t.common.error, variant: "destructive" });
     } finally {
       setSaving(false);
     }
+  }
+
+  async function addInstallment(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!addInstPaymentId) return;
+    setSaving(true);
+    try {
+      await fetch(`/api/payments/${addInstPaymentId}/installments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: instAmount, paidDate: instDate, notes: instNotes || null }),
+      });
+      await loadStudent();
+      setAddInstOpen(false);
+      setInstAmount(""); setInstDate(""); setInstNotes("");
+      toast({ title: t.common.saved });
+    } catch {
+      toast({ title: t.common.error, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteInstallment(paymentId: string, instId: string) {
+    await fetch(`/api/payments/${paymentId}/installments/${instId}`, { method: "DELETE" });
+    await loadStudent();
+    toast({ title: t.common.deleted });
   }
 
   async function updatePayment(e: React.FormEvent<HTMLFormElement>) {
@@ -389,7 +405,7 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
               {t.payments.paid} {formatCurrency(totalPaid)} of {formatCurrency(totalDue)}
             </p>
           </div>
-          <Button size="sm" onClick={() => { setEditingPayment(null); setInstallments([emptyRow()]); setPayOpen(true); }}>
+          <Button size="sm" onClick={() => { setEditingPayment(null); setPayOpen(true); }}>
             <Plus className="mr-1 h-3.5 w-3.5" /> {t.common.add}
           </Button>
         </CardHeader>
@@ -397,29 +413,45 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
           {student.payments.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t.payments.noInstallments}</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t.payments.dueDate}</TableHead>
-                  <TableHead>{t.payments.amountDue}</TableHead>
-                  <TableHead>{t.payments.paid}</TableHead>
-                  <TableHead>{t.payments.paidOn}</TableHead>
-                  <TableHead>{t.common.status}</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {student.payments.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell>{formatDate(p.dueDate)}</TableCell>
-                    <TableCell>{formatCurrency(p.amountDue)}</TableCell>
-                    <TableCell>{formatCurrency(p.amountPaid)}</TableCell>
-                    <TableCell>{p.paidDate ? formatDate(p.paidDate) : "—"}</TableCell>
-                    <TableCell>
-                      <Badge variant={STATUS_VARIANT[p.status]}>{p.status}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
+            <div className="space-y-3">
+              {student.payments.map((p) => {
+                const remaining = p.amountDue - p.amountPaid;
+                const isExpanded = expandedPaymentId === p.id;
+                return (
+                  <div key={p.id} className="rounded-lg border overflow-hidden">
+                    {/* Payment header row */}
+                    <div className="flex items-center gap-3 px-4 py-3 bg-muted/30">
+                      <button
+                        className="flex-1 flex items-center gap-3 text-left"
+                        onClick={() => setExpandedPaymentId(isExpanded ? null : p.id)}
+                      >
+                        <div className="flex-1 grid grid-cols-4 gap-2 text-sm">
+                          <div>
+                            <p className="text-xs text-muted-foreground">{t.payments.dueDate}</p>
+                            <p className="font-medium">{formatDate(p.dueDate)}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">{t.payments.amountDue}</p>
+                            <p className="font-medium">{formatCurrency(p.amountDue)}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">{t.payments.paid}</p>
+                            <p className="font-medium text-green-600 dark:text-green-400">{formatCurrency(p.amountPaid)}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">{t.payments.remaining ?? "Remaining"}</p>
+                            <p className={`font-medium ${remaining > 0 ? "text-destructive" : "text-green-600 dark:text-green-400"}`}>
+                              {remaining > 0 ? formatCurrency(remaining) : "✓"}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant={STATUS_VARIANT[p.status]} className="shrink-0">{p.status}</Badge>
+                      </button>
+                      <div className="flex gap-1 shrink-0">
+                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs"
+                          onClick={() => { setAddInstPaymentId(p.id); setAddInstOpen(true); }}>
+                          <Plus className="h-3 w-3 mr-1" />{t.payments.addInstallment ?? "Pay"}
+                        </Button>
                         <Button size="icon" variant="ghost" className="h-7 w-7"
                           onClick={() => { setEditingPayment(p); setPayOpen(true); }}>
                           <Pencil className="h-3.5 w-3.5" />
@@ -442,123 +474,123 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
                           </AlertDialogContent>
                         </AlertDialog>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </div>
+
+                    {/* Installments (expanded) */}
+                    {isExpanded && (
+                      <div className="px-4 pb-3 pt-2 space-y-2 border-t bg-background">
+                        {p.notes && (
+                          <p className="text-xs text-muted-foreground italic">{p.notes}</p>
+                        )}
+                        {p.installments.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">{t.payments.noInstallmentsYet ?? "No partial payments recorded yet."}</p>
+                        ) : (
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="text-xs text-muted-foreground border-b">
+                                <th className="text-left pb-1">{t.payments.paidOn}</th>
+                                <th className="text-left pb-1">{t.payments.amountDue}</th>
+                                <th className="text-left pb-1">{t.common.notes}</th>
+                                <th></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {p.installments.map((inst) => (
+                                <tr key={inst.id} className="border-b last:border-0">
+                                  <td className="py-1.5">{formatDate(inst.paidDate)}</td>
+                                  <td className="py-1.5 text-green-600 dark:text-green-400">{formatCurrency(inst.amount)}</td>
+                                  <td className="py-1.5 text-muted-foreground">{inst.notes ?? "—"}</td>
+                                  <td className="py-1.5">
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive">
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>{t.payments.deletePayment}</AlertDialogTitle>
+                                          <AlertDialogDescription>{t.payments.deleteConfirm}</AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => deleteInstallment(p.id, inst.id)}>{t.common.delete}</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Payment Dialog */}
-      <Dialog open={payOpen} onOpenChange={(o) => { setPayOpen(o); if (!o) { setEditingPayment(null); setInstallments([emptyRow()]); } }}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+      {/* Add/Edit Payment Plan Dialog */}
+      <Dialog open={payOpen} onOpenChange={(o) => { setPayOpen(o); if (!o) setEditingPayment(null); }}>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>{editingPayment ? t.payments.editPayment ?? t.common.edit : t.payments.addInstallments ?? t.common.add}</DialogTitle>
           </DialogHeader>
-
-          {editingPayment ? (
-            /* Edit single existing payment */
-            <form onSubmit={updatePayment} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="amountDue">{t.payments.amountDue}</Label>
-                  <Input id="amountDue" name="amountDue" type="number" min={0} required
-                    defaultValue={editingPayment.amountDue} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dueDate">{t.payments.dueDate}</Label>
-                  <Input id="dueDate" name="dueDate" type="date" required
-                    defaultValue={editingPayment.dueDate?.slice(0, 10)} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="amountPaid">{t.payments.amountDueUzs}</Label>
-                  <Input id="amountPaid" name="amountPaid" type="number" min={0}
-                    defaultValue={editingPayment.amountPaid ?? 0} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="paidDate">{t.payments.paidOn}</Label>
-                  <Input id="paidDate" name="paidDate" type="date"
-                    defaultValue={editingPayment.paidDate?.slice(0, 10)} />
-                </div>
+          <form onSubmit={editingPayment ? updatePayment : addPayment} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="amountDue">{t.payments.amountDue}</Label>
+                <Input id="amountDue" name="amountDue" type="number" min={0} required
+                  defaultValue={editingPayment?.amountDue} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pay-notes">{t.common.notes}</Label>
-                <Input id="pay-notes" name="notes" defaultValue={editingPayment.notes ?? ""} />
+                <Label htmlFor="dueDate">{t.payments.dueDate}</Label>
+                <Input id="dueDate" name="dueDate" type="date" required
+                  defaultValue={editingPayment?.dueDate?.slice(0, 10)} />
               </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => { setPayOpen(false); setEditingPayment(null); }}>{t.common.cancel}</Button>
-                <Button type="submit" disabled={saving}>{saving ? t.common.loading : t.common.save}</Button>
-              </DialogFooter>
-            </form>
-          ) : (
-            /* Add multiple installments */
-            <form onSubmit={addPayment} className="space-y-4">
-              <div className="space-y-3">
-                {installments.map((row, idx) => (
-                  <div key={idx} className="rounded-lg border p-3 space-y-3 relative">
-                    {installments.length > 1 && (
-                      <button
-                        type="button"
-                        className="absolute top-2 right-2 text-muted-foreground hover:text-destructive"
-                        onClick={() => setInstallments((prev) => prev.filter((_, i) => i !== idx))}
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    )}
-                    <p className="text-xs font-medium text-muted-foreground">
-                      {t.payments.installment ?? "Installment"} {idx + 1}
-                    </p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <Label className="text-xs">{t.payments.amountDue}</Label>
-                        <Input type="number" min={0} required
-                          value={row.amountDue}
-                          onChange={(e) => updateInstallment(idx, "amountDue", e.target.value)} />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">{t.payments.dueDate}</Label>
-                        <Input type="date" required
-                          value={row.dueDate}
-                          onChange={(e) => updateInstallment(idx, "dueDate", e.target.value)} />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <Label className="text-xs">{t.payments.amountDueUzs}</Label>
-                        <Input type="number" min={0}
-                          value={row.amountPaid}
-                          onChange={(e) => updateInstallment(idx, "amountPaid", e.target.value)} />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">{t.payments.paidOn}</Label>
-                        <Input type="date"
-                          value={row.paidDate}
-                          onChange={(e) => updateInstallment(idx, "paidDate", e.target.value)} />
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">{t.common.notes}</Label>
-                      <Input
-                        value={row.notes}
-                        onChange={(e) => updateInstallment(idx, "notes", e.target.value)} />
-                    </div>
-                  </div>
-                ))}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pay-notes">{t.common.notes}</Label>
+              <Input id="pay-notes" name="notes" defaultValue={editingPayment?.notes ?? ""} />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => { setPayOpen(false); setEditingPayment(null); }}>{t.common.cancel}</Button>
+              <Button type="submit" disabled={saving}>{saving ? t.common.loading : t.common.save}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Installment Dialog */}
+      <Dialog open={addInstOpen} onOpenChange={(o) => { setAddInstOpen(o); if (!o) { setInstAmount(""); setInstDate(""); setInstNotes(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.payments.addInstallment ?? "Record Payment"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={addInstallment} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t.payments.amountDue}</Label>
+                <Input type="number" min={0} required value={instAmount} onChange={(e) => setInstAmount(e.target.value)} />
               </div>
-              <Button type="button" variant="outline" size="sm" className="w-full"
-                onClick={() => setInstallments((prev) => [...prev, emptyRow()])}>
-                <Plus className="mr-1 h-3.5 w-3.5" /> {t.payments.addInstallment ?? "Add another installment"}
-              </Button>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => { setPayOpen(false); setInstallments([emptyRow()]); }}>{t.common.cancel}</Button>
-                <Button type="submit" disabled={saving}>{saving ? t.common.loading : t.common.save}</Button>
-              </DialogFooter>
-            </form>
-          )}
+              <div className="space-y-2">
+                <Label>{t.payments.paidOn}</Label>
+                <Input type="date" required value={instDate} onChange={(e) => setInstDate(e.target.value)} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{t.common.notes}</Label>
+              <Input value={instNotes} onChange={(e) => setInstNotes(e.target.value)} />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setAddInstOpen(false)}>{t.common.cancel}</Button>
+              <Button type="submit" disabled={saving}>{saving ? t.common.loading : t.common.save}</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
