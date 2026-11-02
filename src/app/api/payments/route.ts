@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
+import { computeStatus } from "@/lib/payment-utils";
 
 export async function GET(req: Request) {
   try {
@@ -117,8 +118,3 @@ export async function POST(req: Request) {
   }
 }
 
-export function computeStatus(due: number, paid: number, dueDate: Date): "PAID" | "PENDING" | "OVERDUE" {
-  if (paid >= due) return "PAID";
-  if (new Date() > dueDate) return "OVERDUE";
-  return "PENDING";
-}

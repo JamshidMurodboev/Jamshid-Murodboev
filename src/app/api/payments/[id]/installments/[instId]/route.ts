@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
-import { computeStatus } from "../../../route";
+import { computeStatus } from "@/lib/payment-utils";
 
 export async function DELETE(
   _: Request,
