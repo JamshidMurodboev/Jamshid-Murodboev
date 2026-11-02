@@ -162,17 +162,18 @@ model StudentScholarship {
 }
 
 model Payment {
-  id          String        @id @default(cuid())
-  studentId   String
-  student     Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  amountDue   Float
-  dueDate     DateTime
-  amountPaid  Float         @default(0)
-  paidDate    DateTime?
-  status      PaymentStatus @default(PENDING)
-  notes       String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id               String        @id @default(cuid())
+  studentId        String
+  student          Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  amountDue        Float
+  dueDate          DateTime
+  amountPaid       Float         @default(0)
+  paidDate         DateTime?
+  status           PaymentStatus @default(PENDING)
+  notes            String?
+  reminderSentAt   DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 }
 
 enum PaymentStatus {

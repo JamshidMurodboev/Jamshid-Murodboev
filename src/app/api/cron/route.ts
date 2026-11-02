@@ -9,17 +9,21 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const setting = await db.appSetting.findUnique({ where: { key: "telegram_alert_days_before" } });
-  const daysBefore = parseInt(setting?.value ?? "3", 10);
+  const settingsRows = await db.appSetting.findMany();
+  const settings = Object.fromEntries(settingsRows.map((s) => [s.key, s.value]));
+
+  const daysBefore = parseInt(settings.telegram_alert_days_before ?? "3", 10);
 
   const now = new Date();
   const alertDate = new Date(now);
   alertDate.setDate(alertDate.getDate() + daysBefore);
 
+  // Fix: only fetch payments that haven't had a reminder sent yet
   const dueSoon = await db.payment.findMany({
     where: {
       status: "PENDING",
       dueDate: { gte: now, lte: alertDate },
+      reminderSentAt: null,
     },
     include: { student: { select: { fullName: true } } },
   });
@@ -35,38 +39,80 @@ export async function GET(req: Request) {
   });
   const chatIds = users.map((u) => u.telegramChatId!);
 
-  if (chatIds.length === 0) {
-    return NextResponse.json({ sent: 0, note: "No telegram chat IDs configured" });
-  }
+  // Mark overdue statuses
+  await db.payment.updateMany({
+    where: { status: "PENDING", dueDate: { lt: now } },
+    data: { status: "OVERDUE" },
+  });
 
-  const messages: string[] = [];
+  const dailyMessages: string[] = [];
 
   if (dueSoon.length > 0) {
     const lines = dueSoon
       .map((p) => `• ${p.student.fullName}: <b>${formatCurrency(p.amountDue - p.amountPaid)}</b> due ${formatDate(p.dueDate)}`)
       .join("\n");
-    messages.push(`🔔 <b>Payments due in ${daysBefore} days:</b>\n${lines}`);
+    dailyMessages.push(`🔔 <b>Payments due soon (within ${daysBefore} days):</b>\n${lines}`);
+
+    // Mark reminders as sent
+    await db.payment.updateMany({
+      where: { id: { in: dueSoon.map((p) => p.id) } },
+      data: { reminderSentAt: now },
+    });
   }
 
   if (overdue.length > 0) {
     const lines = overdue
       .map((p) => `• ${p.student.fullName}: <b>${formatCurrency(p.amountDue - p.amountPaid)}</b> (due ${formatDate(p.dueDate)})`)
       .join("\n");
-    messages.push(`🚨 <b>Overdue payments (${overdue.length}):</b>\n${lines}`);
+    dailyMessages.push(`🚨 <b>Overdue payments (${overdue.length}):</b>\n${lines}`);
   }
 
-  if (messages.length === 0) {
-    return NextResponse.json({ sent: 0, note: "Nothing to report" });
+  if (chatIds.length > 0 && dailyMessages.length > 0) {
+    await broadcastToAdmins(chatIds, dailyMessages.join("\n\n"));
   }
 
-  const text = messages.join("\n\n");
-  await broadcastToAdmins(chatIds, text);
+  // Weekly summary check
+  const weeklyEnabled = settings.weekly_summary_enabled === "true";
+  let weeklySent = false;
 
-  // Update overdue statuses
-  await db.payment.updateMany({
-    where: { status: "PENDING", dueDate: { lt: now } },
-    data: { status: "OVERDUE" },
+  if (weeklyEnabled && chatIds.length > 0) {
+    const summaryDay = parseInt(settings.weekly_summary_day ?? "1", 10); // 0=Sun, 1=Mon
+    const summaryTime = settings.weekly_summary_time ?? "09:00";
+    const [sumHour, sumMinute] = summaryTime.split(":").map(Number);
+
+    const nowDay = now.getDay();
+    const nowHour = now.getHours();
+    const nowMinute = now.getMinutes();
+
+    // Fire if today matches the configured day and we're within the right hour
+    const timeMatch = nowDay === summaryDay && nowHour === sumHour && Math.abs(nowMinute - sumMinute) <= 30;
+
+    if (timeMatch) {
+      const allPending = await db.payment.findMany({
+        where: { status: { in: ["PENDING", "OVERDUE"] } },
+        include: { student: { select: { fullName: true } } },
+        orderBy: { dueDate: "asc" },
+      });
+
+      if (allPending.length > 0) {
+        const lines = allPending
+          .map((p) => {
+            const icon = p.status === "OVERDUE" ? "🚨" : "📅";
+            const remaining = formatCurrency(p.amountDue - p.amountPaid);
+            return `${icon} ${p.student.fullName}: <b>${remaining}</b> — ${p.status === "OVERDUE" ? "OVERDUE" : `due ${formatDate(p.dueDate)}`}`;
+          })
+          .join("\n");
+        const summary = `📊 <b>Weekly Payment Summary (${allPending.length} pending):</b>\n\n${lines}`;
+        await broadcastToAdmins(chatIds, summary);
+        weeklySent = true;
+      }
+    }
+  }
+
+  return NextResponse.json({
+    sent: chatIds.length,
+    dueSoon: dueSoon.length,
+    overdue: overdue.length,
+    weeklySent,
   });
-
-  return NextResponse.json({ sent: chatIds.length, dueSoon: dueSoon.length, overdue: overdue.length });
 }

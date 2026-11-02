@@ -31,6 +31,9 @@ export function SettingsClient({ role }: { role: string }) {
   const [stages, setStages] = useState<ProgressStage[]>([]);
   const [users, setUsers] = useState<AppUser[]>([]);
   const [alertDays, setAlertDays] = useState("3");
+  const [weeklyEnabled, setWeeklyEnabled] = useState(false);
+  const [weeklyDay, setWeeklyDay] = useState("1");
+  const [weeklyTime, setWeeklyTime] = useState("09:00");
 
   const [scholarshipOpen, setScholarshipOpen] = useState(false);
   const [discountOpen, setDiscountOpen] = useState(false);
@@ -57,16 +60,24 @@ export function SettingsClient({ role }: { role: string }) {
       setStages(st);
       setUsers(u);
       setAlertDays(settings.telegram_alert_days_before ?? "3");
+      setWeeklyEnabled(settings.weekly_summary_enabled === "true");
+      setWeeklyDay(settings.weekly_summary_day ?? "1");
+      setWeeklyTime(settings.weekly_summary_time ?? "09:00");
     });
   }, [isAdmin]);
 
-  async function saveAlertDays() {
+  async function saveTelegramSettings() {
     await fetch("/api/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ telegram_alert_days_before: alertDays }),
+      body: JSON.stringify({
+        telegram_alert_days_before: alertDays,
+        weekly_summary_enabled: String(weeklyEnabled),
+        weekly_summary_day: weeklyDay,
+        weekly_summary_time: weeklyTime,
+      }),
     });
-    toast({ title: "Settings saved" });
+    toast({ title: t.common.saved });
   }
 
   async function handleScholarship(e: React.FormEvent<HTMLFormElement>) {
@@ -343,24 +354,74 @@ export function SettingsClient({ role }: { role: string }) {
             <CardHeader>
               <CardTitle className="text-base">Telegram Alerts</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <p className="text-sm text-muted-foreground">
                 The bot sends payment due reminders and overdue alerts once daily via a Vercel Cron job.
                 Each user&apos;s Telegram chat ID must be set in the Users tab for them to receive alerts.
               </p>
-              <div className="flex items-center gap-3">
-                <Label htmlFor="alertDays">{t.settings.alertDays}</Label>
-                <Input
-                  id="alertDays"
-                  className="w-20"
-                  type="number"
-                  min={1}
-                  max={30}
-                  value={alertDays}
-                  onChange={(e) => setAlertDays(e.target.value)}
-                />
+
+              <div className="space-y-3">
+                <h4 className="text-sm font-medium">{t.settings.dailyReminder ?? "Daily Reminder"}</h4>
+                <div className="flex items-center gap-3">
+                  <Label htmlFor="alertDays">{t.settings.alertDays}</Label>
+                  <Input
+                    id="alertDays"
+                    className="w-20"
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={alertDays}
+                    onChange={(e) => setAlertDays(e.target.value)}
+                  />
+                  <span className="text-sm text-muted-foreground">{t.settings.daysBefore ?? "days before due date"}</span>
+                </div>
               </div>
-              <Button onClick={saveAlertDays}>{t.common.save}</Button>
+
+              <div className="space-y-3 border-t pt-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium">{t.settings.weeklySummary ?? "Weekly Payment Summary"}</h4>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={weeklyEnabled}
+                    onClick={() => setWeeklyEnabled(!weeklyEnabled)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${weeklyEnabled ? "bg-primary" : "bg-muted"}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${weeklyEnabled ? "translate-x-6" : "translate-x-1"}`} />
+                  </button>
+                </div>
+                {weeklyEnabled && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label>{t.settings.dayOfWeek ?? "Day of week"}</Label>
+                      <Select value={weeklyDay} onValueChange={setWeeklyDay}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0">Sunday</SelectItem>
+                          <SelectItem value="1">Monday</SelectItem>
+                          <SelectItem value="2">Tuesday</SelectItem>
+                          <SelectItem value="3">Wednesday</SelectItem>
+                          <SelectItem value="4">Thursday</SelectItem>
+                          <SelectItem value="5">Friday</SelectItem>
+                          <SelectItem value="6">Saturday</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label>{t.settings.timeOfDay ?? "Time"}</Label>
+                      <Input
+                        type="time"
+                        value={weeklyTime}
+                        onChange={(e) => setWeeklyTime(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <Button onClick={saveTelegramSettings}>{t.common.save}</Button>
             </CardContent>
           </Card>
         </TabsContent>
