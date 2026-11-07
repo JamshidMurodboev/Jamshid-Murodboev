@@ -168,10 +168,11 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
           notes: fd.get("planNotes") || null,
         }),
       });
+      if (!res.ok) throw new Error("Failed to create payment");
       const created = await res.json();
       // Create any installments that have an amount filled in
       const filledRows = newPayInstallments.filter((r) => r.amount && r.paidDate);
-      await Promise.all(filledRows.map((r) =>
+      const instResults = await Promise.allSettled(filledRows.map((r) =>
         fetch(`/api/payments/${created.id}/installments`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -181,7 +182,12 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
       await loadStudent();
       setPayOpen(false);
       setNewPayInstallments([emptyInstRow()]);
-      toast({ title: t.common.saved });
+      const failedCount = instResults.filter((r) => r.status === "rejected").length;
+      if (failedCount > 0) {
+        toast({ title: `${t.common.saved} (${failedCount} installment(s) failed)`, variant: "destructive" });
+      } else {
+        toast({ title: t.common.saved });
+      }
     } catch {
       toast({ title: t.common.error, variant: "destructive" });
     } finally {
@@ -508,7 +514,7 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
                             <thead>
                               <tr className="text-xs text-muted-foreground border-b">
                                 <th className="text-left pb-1">{t.payments.paidOn}</th>
-                                <th className="text-left pb-1">{t.payments.amountDue}</th>
+                                <th className="text-left pb-1">{t.payments.paid}</th>
                                 <th className="text-left pb-1">{t.common.notes}</th>
                                 <th></th>
                               </tr>
@@ -618,15 +624,15 @@ export function StudentDetailClient({ studentId }: { studentId: string }) {
               </div>
             )}
 
-            {/* Notes for the plan itself (edit mode) */}
-            {editingPayment && (
-              <div className="space-y-2">
-                <Label htmlFor="pay-notes">{t.common.notes}</Label>
+            {/* Notes for the plan */}
+            <div className="space-y-2">
+              <Label htmlFor="pay-notes">{t.common.notes}</Label>
+              {editingPayment ? (
                 <Input id="pay-notes" name="notes" defaultValue={editingPayment.notes ?? ""} />
-              </div>
-            )}
-
-            <input type="hidden" name="planNotes" value="" />
+              ) : (
+                <Input id="pay-notes" name="planNotes" placeholder={t.common.notes} />
+              )}
+            </div>
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => { setPayOpen(false); setEditingPayment(null); setNewPayInstallments([emptyInstRow()]); }}>{t.common.cancel}</Button>

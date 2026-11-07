@@ -28,6 +28,12 @@ export async function GET(req: Request) {
     include: { student: { select: { fullName: true } } },
   });
 
+  // Mark overdue statuses first so the notification includes freshly-overdue payments
+  await db.payment.updateMany({
+    where: { status: "PENDING", dueDate: { lt: now } },
+    data: { status: "OVERDUE" },
+  });
+
   const overdue = await db.payment.findMany({
     where: { status: "OVERDUE" },
     include: { student: { select: { fullName: true } } },
@@ -38,12 +44,6 @@ export async function GET(req: Request) {
     select: { telegramChatId: true },
   });
   const chatIds = users.map((u) => u.telegramChatId!);
-
-  // Mark overdue statuses
-  await db.payment.updateMany({
-    where: { status: "PENDING", dueDate: { lt: now } },
-    data: { status: "OVERDUE" },
-  });
 
   const dailyMessages: string[] = [];
 
@@ -77,17 +77,10 @@ export async function GET(req: Request) {
 
   if (weeklyEnabled && chatIds.length > 0) {
     const summaryDay = parseInt(settings.weekly_summary_day ?? "1", 10); // 0=Sun, 1=Mon
-    const summaryTime = settings.weekly_summary_time ?? "09:00";
-    const [sumHour, sumMinute] = summaryTime.split(":").map(Number);
-
     const nowDay = now.getDay();
-    const nowHour = now.getHours();
-    const nowMinute = now.getMinutes();
 
-    // Fire if today matches the configured day and we're within the right hour
-    const timeMatch = nowDay === summaryDay && nowHour === sumHour && Math.abs(nowMinute - sumMinute) <= 30;
-
-    if (timeMatch) {
+    // Fire if today matches the configured day (cron runs once daily so no time check needed)
+    if (nowDay === summaryDay) {
       const allPending = await db.payment.findMany({
         where: { status: { in: ["PENDING", "OVERDUE"] } },
         include: { student: { select: { fullName: true } } },

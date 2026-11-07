@@ -21,13 +21,3 @@ export function formatDate(date: Date | string | null | undefined): string {
     year: "numeric",
   }).format(new Date(date));
 }
-
-export function computePaymentStatus(
-  dueDate: Date,
-  amountDue: number,
-  amountPaid: number
-): "PAID" | "PENDING" | "OVERDUE" {
-  if (amountPaid >= amountDue) return "PAID";
-  if (new Date() > new Date(dueDate)) return "OVERDUE";
-  return "PENDING";
-}

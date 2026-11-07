@@ -33,7 +33,6 @@ export function SettingsClient({ role }: { role: string }) {
   const [alertDays, setAlertDays] = useState("3");
   const [weeklyEnabled, setWeeklyEnabled] = useState(false);
   const [weeklyDay, setWeeklyDay] = useState("1");
-  const [weeklyTime, setWeeklyTime] = useState("09:00");
 
   const [scholarshipOpen, setScholarshipOpen] = useState(false);
   const [discountOpen, setDiscountOpen] = useState(false);
@@ -62,7 +61,6 @@ export function SettingsClient({ role }: { role: string }) {
       setAlertDays(settings.telegram_alert_days_before ?? "3");
       setWeeklyEnabled(settings.weekly_summary_enabled === "true");
       setWeeklyDay(settings.weekly_summary_day ?? "1");
-      setWeeklyTime(settings.weekly_summary_time ?? "09:00");
     });
   }, [isAdmin]);
 
@@ -74,7 +72,6 @@ export function SettingsClient({ role }: { role: string }) {
         telegram_alert_days_before: alertDays,
         weekly_summary_enabled: String(weeklyEnabled),
         weekly_summary_day: weeklyDay,
-        weekly_summary_time: weeklyTime,
       }),
     });
     toast({ title: t.common.saved });
@@ -391,7 +388,7 @@ export function SettingsClient({ role }: { role: string }) {
                   </button>
                 </div>
                 {weeklyEnabled && (
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-3">
                     <div className="space-y-1">
                       <Label>{t.settings.dayOfWeek ?? "Day of week"}</Label>
                       <Select value={weeklyDay} onValueChange={setWeeklyDay}>
@@ -409,14 +406,7 @@ export function SettingsClient({ role }: { role: string }) {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-1">
-                      <Label>{t.settings.timeOfDay ?? "Time"}</Label>
-                      <Input
-                        type="time"
-                        value={weeklyTime}
-                        onChange={(e) => setWeeklyTime(e.target.value)}
-                      />
-                    </div>
+                    <p className="text-xs text-muted-foreground">Notification is sent at 08:00 UTC on the selected day.</p>
                   </div>
                 )}
               </div>
