@@ -8,8 +8,10 @@ import {
   tashkentDateKey,
 } from "@/lib/content-digest";
 
-// Runs hourly (see vercel.json). Sends the weekly content digest once, on the
-// chosen weekday, at the first run after the chosen Tashkent time.
+// Runs once a day at 04:00 UTC = 09:00 Tashkent (see vercel.json; Vercel Hobby
+// only allows daily cron jobs). Sends the weekly content digest once, on the
+// chosen weekday, at the first run after the chosen Tashkent time. The endpoint
+// can also be called hourly by an external scheduler with the same CRON_SECRET.
 export async function GET(req: Request) {
   const authHeader = req.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {

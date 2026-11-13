@@ -152,8 +152,15 @@ export function ContentPlanSettings() {
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            Tekshiruv har soat boshida ishlaydi, shuning uchun xabar tanlangan vaqtdan keyingi birinchi soatda keladi.
+            Vercel Hobby rejasida bot kuniga bir marta — Toshkent vaqti bilan 09:00 da tekshiradi, shuning uchun
+            09:00 yoki undan oldingi vaqtni tanlang. Boshqa vaqt kerak bo&apos;lsa, cron-job.org kabi bepul xizmat
+            orqali <code>/api/cron/content-digest</code> manzilini har soatda chaqirish kifoya.
           </p>
+          {time > "09:00" && (
+            <p className="text-xs text-destructive">
+              Diqqat: {time} — 09:00 dan keyin. Tashqi soatlik tekshiruv ulanmaguncha xabar yuborilmaydi.
+            </p>
+          )}
           <div className="flex flex-wrap gap-2">
             <Button onClick={save} disabled={busy !== null}>Saqlash</Button>
             <Button variant="outline" onClick={sendTest} disabled={busy !== null}>
