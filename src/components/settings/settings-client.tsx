@@ -15,6 +15,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, GripVertical } from "lucide-react";
 import { useLanguage } from "@/context/lang-context";
+import { ContentPlanSettings } from "@/components/settings/content-plan-settings";
 
 interface Scholarship { id: string; name: string; shortCode: string; active: boolean }
 interface DiscountType { id: string; name: string; discountValue: number; isPercentage: boolean; active: boolean }
@@ -414,6 +415,7 @@ export function SettingsClient({ role }: { role: string }) {
               <Button onClick={saveTelegramSettings}>{t.common.save}</Button>
             </CardContent>
           </Card>
+          <ContentPlanSettings />
         </TabsContent>
       </Tabs>
 

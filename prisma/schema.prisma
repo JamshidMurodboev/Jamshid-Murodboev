@@ -233,3 +233,20 @@ model Mark {
   @@index([lessonId])
   @@index([studentId])
 }
+
+// Telegram channel content plan — posts the bot sends to admins in a weekly digest
+model ContentPost {
+  id        String   @id @default(cuid())
+  key       String?  @unique // stable key for imported plans, e.g. "p1"
+  date      DateTime // publish day (stored as 00:00 UTC of the Tashkent calendar date)
+  time      String?  // HH:MM in Tashkent time; null = "at webinar start"
+  title     String
+  type      String
+  format    String
+  note      String?
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+}
