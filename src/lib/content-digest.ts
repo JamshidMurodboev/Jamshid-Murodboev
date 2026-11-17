@@ -121,6 +121,61 @@ export async function buildDigestMessages(now: Date = new Date()): Promise<strin
   return [overview, ...perPost];
 }
 
+/** "21:00" (Tashkent) -> "19:00" (Istanbul, UTC+3). */
+function toIstanbul(time: string | null): string {
+  if (!time) return "webinar boshlanganda";
+  const [h, m] = time.split(":").map((x) => parseInt(x, 10));
+  const ih = (h - 2 + 24) % 24;
+  return `${String(ih).padStart(2, "0")}:${String(m || 0).padStart(2, "0")}`;
+}
+
+/** Today's posts (Tashkent calendar day), each with full text — for the morning reminder. */
+export async function buildDailyMessages(now: Date = new Date()): Promise<string[]> {
+  const start = dateKeyToStoredDate(tashkentDateKey(now));
+  const posts = await db.contentPost.findMany({
+    where: { date: start },
+    orderBy: [{ time: "asc" }],
+  });
+  if (posts.length === 0) return [];
+
+  const overview =
+    `☀️ <b>Bugungi postlar</b> — ${formatPostDay(start)}\n` +
+    posts
+      .map(
+        (p) =>
+          `• <b>${toIstanbul(p.time)}</b> Istanbul / ${p.time ?? "—"} Toshkent — ${escapeHtml(p.title)}\n` +
+          `   <i>${escapeHtml(p.type)} · ${escapeHtml(p.format)}</i>`
+      )
+      .join("\n");
+
+  const perPost = posts.flatMap((p, i) =>
+    splitForTelegram(
+      `📌 <b>${i + 1}/${posts.length} · ${p.time ?? "webinar boshlanganda"}</b> — ${escapeHtml(p.title)}\n\n` +
+        escapeHtml(p.body)
+    )
+  );
+  return [overview, ...perPost];
+}
+
+export async function getDailySettings() {
+  const rows = await db.appSetting.findMany({
+    where: { key: { in: ["content_daily_enabled", "content_daily_last_sent"] } },
+  });
+  const s = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  return {
+    enabled: (s.content_daily_enabled ?? "true") === "true",
+    lastSent: s.content_daily_last_sent ?? null,
+  };
+}
+
+export async function sendMessages(chatIds: string[], messages: string[]) {
+  for (const chatId of chatIds) {
+    for (const text of messages) {
+      await sendTelegramMessage(chatId, text);
+    }
+  }
+}
+
 export async function getAdminChatIds(): Promise<string[]> {
   const admins = await db.user.findMany({
     where: { role: "ADMIN", telegramChatId: { not: null } },

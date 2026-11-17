@@ -38,11 +38,12 @@ function todayKeyTashkent() {
 export function ContentPlanSettings() {
   const { toast } = useToast();
   const [enabled, setEnabled] = useState(true);
+  const [dailyEnabled, setDailyEnabled] = useState(true);
   const [day, setDay] = useState("6");
   const [time, setTime] = useState("09:00");
   const [posts, setPosts] = useState<ContentPost[]>([]);
   const [open, setOpen] = useState<string | null>(null);
-  const [busy, setBusy] = useState<"save" | "import" | "test" | null>(null);
+  const [busy, setBusy] = useState<"save" | "import" | "test" | "daily" | null>(null);
   const [showPast, setShowPast] = useState(false);
 
   async function loadPosts() {
@@ -55,6 +56,7 @@ export function ContentPlanSettings() {
       .then((r) => r.json())
       .then((s) => {
         setEnabled((s.content_digest_enabled ?? "true") === "true");
+        setDailyEnabled((s.content_daily_enabled ?? "true") === "true");
         setDay(s.content_digest_day ?? "6");
         setTime(s.content_digest_time ?? "09:00");
       });
@@ -68,6 +70,7 @@ export function ContentPlanSettings() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         content_digest_enabled: String(enabled),
+        content_daily_enabled: String(dailyEnabled),
         content_digest_day: day,
         content_digest_time: time,
       }),
@@ -101,6 +104,18 @@ export function ContentPlanSettings() {
     );
   }
 
+  async function sendDailyTest() {
+    setBusy("daily");
+    const res = await fetch("/api/content-posts/send-test?mode=daily", { method: "POST" });
+    const data = await res.json();
+    setBusy(null);
+    toast(
+      res.ok
+        ? { title: `Bugungi postlar yuborildi (${data.messages} ta xabar)` }
+        : { title: data.error ?? "Yuborib bo'lmadi", variant: "destructive" }
+    );
+  }
+
   async function remove(id: string) {
     await fetch(`/api/content-posts/${id}`, { method: "DELETE" });
     setPosts((prev) => prev.filter((p) => p.id !== id));
@@ -121,6 +136,21 @@ export function ContentPlanSettings() {
           Bot tanlangan kuni va vaqtida keyingi 7 kunlik postlarni to&apos;liq matni bilan Telegramga yuboradi.
           Xabar Telegram chat ID kiritilgan barcha adminlarga boradi.
         </p>
+
+        <div className="space-y-2 rounded-md border p-3">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="daily-enabled">Kunlik eslatma — har kuni ertalab</Label>
+            <Switch id="daily-enabled" checked={dailyEnabled} onCheckedChange={setDailyEnabled} />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Har kuni 07:00 da (🇹🇷 Istanbul vaqti; 🇺🇿 Toshkentda 09:00) bot o&apos;sha kuni joylanadigan postlarni
+            to&apos;liq matni bilan yuboradi. Post bo&apos;lmagan kunlari xabar kelmaydi. Haftalik reja keladigan kuni
+            kunlik eslatma alohida yuborilmaydi — u haftalik xabar ichida bor.
+          </p>
+          <Button size="sm" variant="outline" onClick={sendDailyTest} disabled={busy !== null}>
+            <Send className="mr-1 h-3.5 w-3.5" /> Bugungi postlarni hozir yuborish
+          </Button>
+        </div>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
