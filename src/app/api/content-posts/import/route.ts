@@ -25,7 +25,13 @@ export async function POST() {
         create: { key: `nov2026-${p.key}`, ...data },
       });
     }
-    return NextResponse.json({ imported: CONTENT_PLAN_NOV_2026.length });
+    // Remove posts from earlier versions of this plan that are no longer in it
+    // (e.g. the single-webinar posts replaced by the 3-day series).
+    const keys = CONTENT_PLAN_NOV_2026.map((p) => `nov2026-${p.key}`);
+    const removed = await db.contentPost.deleteMany({
+      where: { key: { startsWith: "nov2026-", notIn: keys } },
+    });
+    return NextResponse.json({ imported: CONTENT_PLAN_NOV_2026.length, removed: removed.count });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Failed to import" }, { status: 500 });
