@@ -350,16 +350,13 @@ export function SettingsClient({ role }: { role: string }) {
         <TabsContent value="telegram">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Telegram Alerts</CardTitle>
+              <CardTitle className="text-base">{t.settings.telegramAlertsTitle}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <p className="text-sm text-muted-foreground">
-                The bot sends payment due reminders and overdue alerts once daily via a Vercel Cron job.
-                Each user&apos;s Telegram chat ID must be set in the Users tab for them to receive alerts.
-              </p>
+              <p className="text-sm text-muted-foreground">{t.settings.telegramDesc}</p>
 
               <div className="space-y-3">
-                <h4 className="text-sm font-medium">{t.settings.dailyReminder ?? "Daily Reminder"}</h4>
+                <h4 className="text-sm font-medium">{t.settings.dailyReminder}</h4>
                 <div className="flex items-center gap-3">
                   <Label htmlFor="alertDays">{t.settings.alertDays}</Label>
                   <Input
@@ -371,13 +368,13 @@ export function SettingsClient({ role }: { role: string }) {
                     value={alertDays}
                     onChange={(e) => setAlertDays(e.target.value)}
                   />
-                  <span className="text-sm text-muted-foreground">{t.settings.daysBefore ?? "days before due date"}</span>
+                  <span className="text-sm text-muted-foreground">{t.settings.daysBefore}</span>
                 </div>
               </div>
 
               <div className="space-y-3 border-t pt-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-medium">{t.settings.weeklySummary ?? "Weekly Payment Summary"}</h4>
+                  <h4 className="text-sm font-medium">{t.settings.weeklySummary}</h4>
                   <button
                     type="button"
                     role="switch"
@@ -391,23 +388,19 @@ export function SettingsClient({ role }: { role: string }) {
                 {weeklyEnabled && (
                   <div className="space-y-3">
                     <div className="space-y-1">
-                      <Label>{t.settings.dayOfWeek ?? "Day of week"}</Label>
+                      <Label>{t.settings.dayOfWeek}</Label>
                       <Select value={weeklyDay} onValueChange={setWeeklyDay}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="0">Sunday</SelectItem>
-                          <SelectItem value="1">Monday</SelectItem>
-                          <SelectItem value="2">Tuesday</SelectItem>
-                          <SelectItem value="3">Wednesday</SelectItem>
-                          <SelectItem value="4">Thursday</SelectItem>
-                          <SelectItem value="5">Friday</SelectItem>
-                          <SelectItem value="6">Saturday</SelectItem>
+                          {t.settings.days.map((day, i) => (
+                            <SelectItem key={i} value={String(i)}>{day}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    <p className="text-xs text-muted-foreground">Notification is sent at 08:00 UTC on the selected day.</p>
+                    <p className="text-xs text-muted-foreground">{t.settings.notificationTime}</p>
                   </div>
                 )}
               </div>

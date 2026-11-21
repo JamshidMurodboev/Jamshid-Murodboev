@@ -129,7 +129,7 @@ export function DashboardClient() {
                     <TableCell className="text-right text-green-600 dark:text-green-400 font-medium">
                       {b.collected > 0 ? formatCurrency(b.collected) : "—"}
                     </TableCell>
-                    <TableCell className={`text-right font-medium ${b.outstanding > 0 ? "text-destructive" : "text-muted-foreground"}`}>
+                    <TableCell className={`text-right font-medium ${b.outstanding > 0 ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`}>
                       {b.outstanding > 0 ? formatCurrency(b.outstanding) : "—"}
                     </TableCell>
                     <TableCell className="text-right">
@@ -149,7 +149,7 @@ export function DashboardClient() {
                   <TableCell className="text-right">{data.totalStudents}</TableCell>
                   <TableCell className="text-right">{formatCurrency(data.totalDue)}</TableCell>
                   <TableCell className="text-right text-green-600 dark:text-green-400">{formatCurrency(data.totalCollected)}</TableCell>
-                  <TableCell className={`text-right ${data.outstanding > 0 ? "text-destructive" : ""}`}>
+                  <TableCell className={`text-right ${data.outstanding > 0 ? "text-red-600 dark:text-red-400" : ""}`}>
                     {data.outstanding > 0 ? formatCurrency(data.outstanding) : "—"}
                   </TableCell>
                   <TableCell className="text-right">
@@ -221,7 +221,7 @@ function StatCard({ title, value, sub, icon, highlight, color }: {
         <span className={`rounded-lg p-2 ${iconBg}`}>{icon}</span>
       </CardHeader>
       <CardContent>
-        <p className={`text-2xl font-bold ${highlight ? "text-destructive" : ""}`}>{value}</p>
+        <p className={`text-2xl font-bold ${highlight ? "text-red-600 dark:text-red-400" : ""}`}>{value}</p>
         {sub && <p className="mt-1 text-xs text-muted-foreground">{sub}</p>}
       </CardContent>
     </Card>

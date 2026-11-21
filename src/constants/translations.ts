@@ -63,7 +63,7 @@ export const TRANSLATIONS = {
       totalStudents: "Jami talabalar",
       revenueCollected: "Yig'ilgan daromad",
       outstanding: "Qoldiq",
-      paymentsDue: "to'lov muddati o'tdi",
+      paymentsDue: "to'lanmagan balans",
       winRate: "G'alaba foizi",
       noResultsYet: "Natijalar hali yo'q",
       overdueAlert: (n: number) =>
@@ -192,6 +192,10 @@ export const TRANSLATIONS = {
       weeklySummary: "Haftalik to'lov hisoboti",
       dayOfWeek: "Hafta kuni",
       timeOfDay: "Vaqt",
+      telegramAlertsTitle: "Telegram Bildirishnomalar",
+      telegramDesc: "Bot Vercel Cron orqali kunlik to'lov eslatmalarini yuboradi. Foydalanuvchi Telegram Chat ID'si sozlanmagan bo'lsa, xabar yuborilmaydi.",
+      notificationTime: "Xabarnoma tanlangan kunda 08:00 UTC'da yuboriladi.",
+      days: ["Yakshanba", "Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba"],
       shortCode: "Qisqa kod",
       stageName: "Bosqich nomi",
       discountValue: "Chegirma qiymati",
@@ -328,7 +332,7 @@ export const TRANSLATIONS = {
       totalStudents: "Всего студентов",
       revenueCollected: "Собранный доход",
       outstanding: "Задолженность",
-      paymentsDue: "просроченных платежей",
+      paymentsDue: "неоплаченный остаток",
       winRate: "Процент побед",
       noResultsYet: "Результатов пока нет",
       overdueAlert: (n: number) =>
@@ -457,6 +461,10 @@ export const TRANSLATIONS = {
       weeklySummary: "Еженедельный отчёт по платежам",
       dayOfWeek: "День недели",
       timeOfDay: "Время",
+      telegramAlertsTitle: "Telegram Уведомления",
+      telegramDesc: "Бот отправляет ежедневные напоминания о платежах через Vercel Cron. Telegram Chat ID пользователя должен быть указан во вкладке Пользователи.",
+      notificationTime: "Уведомление отправляется в 08:00 UTC в выбранный день.",
+      days: ["Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"],
       shortCode: "Короткий код",
       stageName: "Название этапа",
       discountValue: "Значение скидки",
@@ -533,5 +541,5 @@ export const TRANSLATIONS = {
 } as const;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Loosen<T> = { readonly [K in keyof T]: T[K] extends (...args: any[]) => any ? T[K] : T[K] extends Record<string, unknown> ? Loosen<T[K]> : string };
+type Loosen<T> = { readonly [K in keyof T]: T[K] extends (...args: any[]) => any ? T[K] : T[K] extends readonly any[] ? readonly string[] : T[K] extends Record<string, unknown> ? Loosen<T[K]> : string };
 export type Translations = Loosen<typeof TRANSLATIONS["uz"]>;
